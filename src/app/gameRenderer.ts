@@ -220,7 +220,10 @@ export function createGameRenderer({
 
   function syncMobileNavOffset(): void {
     const navHeight = elements.mobileNav.offsetHeight || 76;
-    elements.shell.style.setProperty("--mobile-nav-offset", `${navHeight + 20}px`);
+    elements.shell.style.setProperty(
+      "--mobile-nav-offset",
+      `${navHeight + 20}px`,
+    );
   }
 
   function render(state: GameState): void {

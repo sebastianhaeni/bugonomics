@@ -30,251 +30,36 @@ import {
   isGameOver,
   tick,
 } from "./game/engine.js";
-import { loadState, saveState } from "./game/persistence.js";
 import { CODE_BACKGROUND_SNIPPETS } from "./game/codeBackgroundSnippets.js";
+import {
+  ACHIEVEMENTS,
+  ACTIVE_UPGRADE_CATALOG,
+  COMBO_CALLOUTS,
+  getAchievementStatus,
+  getBoughtUpgradeCount,
+  getCompanyStagePresentation,
+} from "./app/progression.js";
+import { createAudioController } from "./app/audioController.js";
+import { createGameStore, hasPlayerProgress } from "./app/gameStore.js";
+import { clamp01, ratioByLog } from "./app/math.js";
+import { mountGameShell } from "./app/shell.js";
+import { registerServiceWorker } from "./app/registerServiceWorker.js";
 
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    const serviceWorkerUrl = new URL("sw.js", document.baseURI);
-    const serviceWorkerScope = new URL("./", document.baseURI).pathname;
-    navigator.serviceWorker
-      .register(serviceWorkerUrl, {
-        scope: serviceWorkerScope,
-      })
-      .catch((error) => {
-        console.error("Service worker registration failed", error);
-      });
-  });
-}
+registerServiceWorker();
 
-let state = loadState(window.localStorage, Date.now());
-if (!state) {
-  state = createInitialState(Date.now());
-}
+const store = createGameStore({ storage: window.localStorage });
+let state = store.getState();
 const STRATEGIC_DEBT_AUTO_POSTPONE_MS = 15_000;
 const KEYBOARD_WRITE_DEBOUNCE_MS = 180;
 const KEYBOARD_HINT_VISIBLE_MS = 6000;
 const COMBO_TIMEOUT_MS = 1800;
-const AUDIO_LOOKAHEAD_MS = 120;
-const AUDIO_SCHEDULE_AHEAD_SEC = 0.35;
 
 const app = document.querySelector("#app");
-app.innerHTML = `
-  <main class="game-shell">
-    <section class="game-over-overlay" data-cy="game-over-overlay" hidden>
-      <div class="game-over-card">
-        <h2 data-cy="game-over-title">Game Over</h2>
-        <p data-cy="game-over-message"></p>
-        <button data-cy="game-over-restart-btn">Restart Run</button>
-      </div>
-    </section>
-    <div class="code-background" data-cy="code-background" aria-hidden="true"></div>
-    <div class="dashboard">
-      <section class="main-column">
-        <section class="hero tile-hero" data-cy="hero">
-          <h1>Bugonomics</h1>
-          <p class="subtitle">Click hard, automate harder, ship fastest.</p>
-          <div class="company-evolution" data-cy="company-evolution">
-            <div class="company-head">
-              <span>Company</span>
-              <strong data-cy="company-stage">Garage</strong>
-            </div>
-            <p data-cy="company-note">Two laptops, one dream.</p>
-            <div class="company-progress" aria-hidden="true">
-              <span data-cy="company-fill"></span>
-            </div>
-          </div>
-          <div class="click-primary-wrap">
-            <button class="click-primary" data-cy="click-btn">Write line of code</button>
-            <div class="hint-popover" role="note">Tip: type on your keyboard to write LOC too.</div>
-            <p class="combo-meter" data-cy="combo-meter">Flow x0</p>
-            <div class="combo-bursts" data-cy="combo-bursts"></div>
-          </div>
-          <div class="loc-visual-wrap">
-            <div class="loc-visual" data-cy="loc-visual"></div>
-            <div class="loc-bursts" data-cy="loc-bursts"></div>
-          </div>
-          <div class="team-visual" data-cy="team-visual"></div>
-        </section>
-
-        <section class="actions panel tile-actions">
-          <div class="strategy-picker">
-            <h2>Strategy</h2>
-            <div class="strategy-modes" data-cy="tradeoff-select" role="tablist" aria-label="Strategy"></div>
-          </div>
-          <div class="risk-readout">
-            <p data-cy="dev-bug-risk">Developer bug risk: -</p>
-            <p data-cy="ai-bug-risk">AI agent bug risk: -</p>
-          </div>
-        </section>
-
-        <section class="panel tile-devs">
-          <h2>Hiring</h2>
-          <div class="developers" data-cy="developers"></div>
-        </section>
-
-        <section class="panel tile-shop">
-          <h2>Upgrades To Buy</h2>
-          <div class="upgrades" data-cy="upgrade-shop-list"></div>
-
-          <details class="locked-upgrades" data-cy="locked-upgrades">
-            <summary>Show locked/not-yet-buyable upgrades</summary>
-            <div class="upgrades" data-cy="upgrade-locked-list"></div>
-          </details>
-        </section>
-
-        <section class="panel tile-utility">
-          <section class="strategic-debt" data-cy="strategic-debt-box" hidden>
-            <h2>Strategic Tech Debt</h2>
-            <p data-cy="strategic-debt-title">-</p>
-            <p data-cy="strategic-debt-description">-</p>
-            <div class="strategic-actions">
-              <button data-cy="strategic-rewrite-btn">Rewrite Now</button>
-              <button data-cy="strategic-postpone-btn">Postpone</button>
-            </div>
-          </section>
-
-          <section class="goal-panel">
-            <h2>Release Goal</h2>
-            <p class="status-line" data-cy="release-goal-target">Release Version 1.0 at 0 lifetime LOC.</p>
-            <p class="status-line" data-cy="release-goal-progress">Progress: 0%</p>
-            <p class="status-line" data-cy="release-goal-reward">Reputation on release: +0</p>
-            <div class="prestige-actions">
-              <button data-cy="prestige-reset-btn">Release Version 1.0 (Reset for Reputation)</button>
-              <button data-cy="restart-btn">Restart Run</button>
-            </div>
-          </section>
-          <details class="collapsible">
-            <summary>Reputation Upgrades</summary>
-            <div class="prestige-upgrades" data-cy="prestige-upgrade-list"></div>
-          </details>
-          <details class="collapsible">
-            <summary>Achievements</summary>
-            <ul class="achievements" data-cy="achievement-list"></ul>
-          </details>
-
-        </section>
-      </section>
-
-      <aside class="side-column sticky-panel">
-        <section class="panel stats tile-stats" data-cy="stats">
-          <div data-cy="stat-card-dollars"><span>$</span><strong data-cy="dollars-value">0</strong></div>
-          <div data-cy="stat-card-lifetime"><span>Lifetime LOC</span><strong data-cy="lifetime-value">0</strong></div>
-          <div data-cy="stat-card-upgrades"><span>Upgrades</span><strong data-cy="upgrades-value">0 / 0</strong></div>
-          <div data-cy="stat-card-locps"><span>LOC / sec</span><strong data-cy="locps-value">0</strong></div>
-          <div data-cy="stat-card-conversion"><span>$ / LOC</span><strong data-cy="conversion-value">0</strong></div>
-          <div data-cy="stat-card-output"><span>Output</span><strong data-cy="output-value">x1.00</strong></div>
-          <div data-cy="stat-card-ai"><span>AI agents</span><strong data-cy="tokens-value">0</strong></div>
-          <div data-cy="stat-card-bugs"><span>Active bugs</span><strong data-cy="bugs-value">0</strong></div>
-          <div data-cy="stat-card-reputation"><span>Reputation</span><strong data-cy="reputation-value">0</strong></div>
-        </section>
-
-        <section class="panel tile-debt">
-          <h2>Tech Debt Meter</h2>
-          <div class="risk-readout risk-readout-prominent">
-            <p data-cy="tech-debt-risk">Tech debt risk: -</p>
-            <p data-cy="tech-debt-bugs">Bugs: -</p>
-            <p data-cy="tech-debt-meta">Structural debt: -</p>
-            <div class="debt-bar debt-bar-prominent" aria-hidden="true">
-              <span data-cy="tech-debt-fill"></span>
-            </div>
-            <button data-cy="repair-tech-debt-btn">Refactor Debt</button>
-          </div>
-        </section>
-
-        <section class="panel tile-bugs">
-          <h2>Bugs</h2>
-          <ul class="bugs" data-cy="bug-list"></ul>
-        </section>
-
-        <section class="panel tile-events">
-          <h2>Random Events</h2>
-          <ul class="events" data-cy="event-list"></ul>
-        </section>
-
-        <section class="panel tile-owned">
-          <h2>Owned Upgrades</h2>
-          <div class="upgrades" data-cy="upgrade-owned-list"></div>
-        </section>
-      </aside>
-    </div>
-  </main>
-`;
-
-const elements = {
-  dollars: app.querySelector('[data-cy="dollars-value"]'),
-  conversion: app.querySelector('[data-cy="conversion-value"]'),
-  locps: app.querySelector('[data-cy="locps-value"]'),
-  output: app.querySelector('[data-cy="output-value"]'),
-  tokens: app.querySelector('[data-cy="tokens-value"]'),
-  bugs: app.querySelector('[data-cy="bugs-value"]'),
-  reputation: app.querySelector('[data-cy="reputation-value"]'),
-  lifetime: app.querySelector('[data-cy="lifetime-value"]'),
-  upgrades: app.querySelector('[data-cy="upgrades-value"]'),
-  companyEvolution: app.querySelector('[data-cy="company-evolution"]'),
-  companyStage: app.querySelector('[data-cy="company-stage"]'),
-  companyNote: app.querySelector('[data-cy="company-note"]'),
-  companyFill: app.querySelector('[data-cy="company-fill"]'),
-  comboMeter: app.querySelector('[data-cy="combo-meter"]'),
-  comboBursts: app.querySelector('[data-cy="combo-bursts"]'),
-  developers: app.querySelector('[data-cy="developers"]'),
-  upgradeShop: app.querySelector('[data-cy="upgrade-shop-list"]'),
-  upgradeOwned: app.querySelector('[data-cy="upgrade-owned-list"]'),
-  achievements: app.querySelector('[data-cy="achievement-list"]'),
-  upgradeLocked: app.querySelector('[data-cy="upgrade-locked-list"]'),
-  lockedSummary: app.querySelector('[data-cy="locked-upgrades"] summary'),
-  bugList: app.querySelector('[data-cy="bug-list"]'),
-  eventList: app.querySelector('[data-cy="event-list"]'),
-  prestigeReset: app.querySelector('[data-cy="prestige-reset-btn"]'),
-  restart: app.querySelector('[data-cy="restart-btn"]'),
-  goalProgress: app.querySelector('[data-cy="release-goal-progress"]'),
-  goalTarget: app.querySelector('[data-cy="release-goal-target"]'),
-  goalReward: app.querySelector('[data-cy="release-goal-reward"]'),
-  prestigeUpgradeList: app.querySelector('[data-cy="prestige-upgrade-list"]'),
-  tradeoffModes: app.querySelector('[data-cy="tradeoff-select"]'),
-  devBugRisk: app.querySelector('[data-cy="dev-bug-risk"]'),
-  aiBugRisk: app.querySelector('[data-cy="ai-bug-risk"]'),
-  techDebtRisk: app.querySelector('[data-cy="tech-debt-risk"]'),
-  techDebtBugs: app.querySelector('[data-cy="tech-debt-bugs"]'),
-  techDebtMeta: app.querySelector('[data-cy="tech-debt-meta"]'),
-  techDebtFill: app.querySelector('[data-cy="tech-debt-fill"]'),
-  repairTechDebt: app.querySelector('[data-cy="repair-tech-debt-btn"]'),
-  strategicDebtBox: app.querySelector('[data-cy="strategic-debt-box"]'),
-  strategicDebtTitle: app.querySelector('[data-cy="strategic-debt-title"]'),
-  strategicDebtDescription: app.querySelector(
-    '[data-cy="strategic-debt-description"]',
-  ),
-  locVisual: app.querySelector('[data-cy="loc-visual"]'),
-  locBursts: app.querySelector('[data-cy="loc-bursts"]'),
-  clickPrimaryWrap: app.querySelector(".click-primary-wrap"),
-  teamVisual: app.querySelector('[data-cy="team-visual"]'),
-  codeBackground: app.querySelector('[data-cy="code-background"]'),
-  gameOverOverlay: app.querySelector('[data-cy="game-over-overlay"]'),
-  gameOverTitle: app.querySelector('[data-cy="game-over-title"]'),
-  gameOverMessage: app.querySelector('[data-cy="game-over-message"]'),
-  shell: app.querySelector(".game-shell"),
-};
-
-const buttons = {
-  click: app.querySelector('[data-cy="click-btn"]'),
-  strategicRewrite: app.querySelector('[data-cy="strategic-rewrite-btn"]'),
-  strategicPostpone: app.querySelector('[data-cy="strategic-postpone-btn"]'),
-  gameOverRestart: app.querySelector('[data-cy="game-over-restart-btn"]'),
-};
+const { elements, buttons, statCards } = mountGameShell(app);
 
 const UPGRADE_BY_ID = new Map(
   UPGRADE_CATALOG.map((upgrade) => [upgrade.id, upgrade]),
 );
-const DISABLED_ABILITY_UPGRADE_IDS = new Set([
-  "unlock_crunch_time",
-  "unlock_hackathon",
-  "unlock_coffee_break",
-  "unlock_bug_bash",
-]);
-const ACTIVE_UPGRADE_CATALOG = UPGRADE_CATALOG.filter(
-  (upgrade) => !DISABLED_ABILITY_UPGRADE_IDS.has(upgrade.id),
-);
-
 const developerRows = {};
 const teamHireRows = {};
 const upgradeRows = new Map();
@@ -299,28 +84,6 @@ const comboState = {
   lastHitAt: 0,
 };
 let lastKeyboardWriteAt = 0;
-const audioState = {
-  context: null,
-  masterGain: null,
-  limiter: null,
-  started: false,
-  schedulerId: 0,
-  nextNoteTime: 0,
-  step: 0,
-  threatLevel: 0,
-  gameOverAtMsPlayed: null,
-};
-const statCards = {
-  dollars: app.querySelector('[data-cy="stat-card-dollars"]'),
-  conversion: app.querySelector('[data-cy="stat-card-conversion"]'),
-  locps: app.querySelector('[data-cy="stat-card-locps"]'),
-  output: app.querySelector('[data-cy="stat-card-output"]'),
-  upgrades: app.querySelector('[data-cy="stat-card-upgrades"]'),
-  ai: app.querySelector('[data-cy="stat-card-ai"]'),
-  bugs: app.querySelector('[data-cy="stat-card-bugs"]'),
-  reputation: app.querySelector('[data-cy="stat-card-reputation"]'),
-  lifetime: app.querySelector('[data-cy="stat-card-lifetime"]'),
-};
 const codeBackgroundState = {
   speedCharsPerSecond: 0,
   targetCharsPerSecond: 4,
@@ -329,207 +92,7 @@ const codeBackgroundState = {
   currentLine: null,
   maxLines: 130,
 };
-const COMPANY_STAGES = [
-  {
-    id: "garage",
-    label: "Garage",
-    minDollars: 0,
-    note: "Two laptops, one dream.",
-  },
-  {
-    id: "startup",
-    label: "Startup",
-    minDollars: 600,
-    note: "You now have standups and a coffee budget.",
-  },
-  {
-    id: "scaleup",
-    label: "Scale-up",
-    minDollars: 6_000,
-    note: "Teams emerge, dashboards multiply.",
-  },
-  {
-    id: "unicorn",
-    label: "Unicorn",
-    minDollars: 55_000,
-    note: "Congrats. Your infra bill has commas.",
-  },
-];
-const COMBO_CALLOUTS = [
-  "Clean Commit",
-  "No Merge Conflicts",
-  "Refactor Rampage",
-  "Zero-Lint Streak",
-  "Rubber Duck Approved",
-  "It Works In Prod",
-  "CI Is Green",
-  "Bug-Free-ish",
-  "Legendary Pairing",
-  "Velocity Unlocked",
-  "Hot Reload Hero",
-  "Stack Trace Slayer",
-  "Semicolon Samurai",
-  "Console Log Whisperer",
-  "Merge Train Conductor",
-  "Feature Flag Ninja",
-  "Unit Test Wizard",
-  "API Contract Keeper",
-  "Frontend Fury",
-  "Backend Blessing",
-  "Latency Hunter",
-  "Ship It Energy",
-  "Deploy Day Confidence",
-  "Caffeine Optimized",
-  "Type Safety Aura",
-  "No Flaky Tests Today",
-  "One More Refactor",
-  "Green Pipeline Groove",
-  "Pull Request Poetry",
-  "Keyboard Katana",
-  "Debugging Clairvoyance",
-  "Small Commit Supremacy",
-  "Cache Hit Celebration",
-  "SLO Defender",
-  "Incident Dodger",
-  "Scope Creep Blocked",
-  "Design Doc Enjoyer",
-  "Architecture Brain",
-  "Pairing Power-Up",
-  "Async Mastery",
-  "Promise Fulfilled",
-  "Null Check Champion",
-  "Git Rebase Acrobat",
-  "No TODO Left Behind",
-  "Legacy Tamer",
-  "Monorepo Marathon",
-  "Canary Whisperer",
-  "Build Cache Blessing",
-  "Memory Leak Hunter",
-  "UX Polisher",
-  "Product Sense +10",
-  "Dark Mode Productivity",
-  "No Pager Tonight",
-  "Deadline Defused",
-  "Tech Debt Dodged",
-  "Regex Sorcery",
-  "Bug Bash Berserk",
-  "Commit Message Art",
-  "Observability Online",
-  "Telemetry Titan",
-  "Rollback-Proof",
-  "Refactor Without Fear",
-  "Production Zen",
-  "Localhost Legend",
-  "Lint Rules Obeyed",
-  "Code Review Charmer",
-  "Coffee-Fueled Throughput",
-  "No More Hotfixes",
-  "Flame Graph Tamed",
-  "A11y Ace",
-  "Edge Case Exorcist",
-  "Sprint Burndown Destroyer",
-  "Feature Complete-ish",
-  "One More Tiny Improvement",
-  "No Regression Detected",
-];
-const ACHIEVEMENTS = [
-  {
-    id: "first_keystroke",
-    title: "Hello, World",
-    description: "Write your first line of code.",
-    target: 1,
-    value: (currentState) => currentState.totalClicks,
-    unit: "clicks",
-  },
-  {
-    id: "click_hustle",
-    title: "Keyboard Warrior",
-    description: "Reach 250 manual writes.",
-    target: 250,
-    value: (currentState) => currentState.totalClicks,
-    unit: "clicks",
-  },
-  {
-    id: "first_hire",
-    title: "First Teammate",
-    description: "Hire your first contributor.",
-    target: 1,
-    value: (currentState) => currentState.totalHires,
-    unit: "hires",
-  },
-  {
-    id: "team_builder",
-    title: "Org Chart Growing",
-    description: "Hire 20 contributors.",
-    target: 20,
-    value: (currentState) => currentState.totalHires,
-    unit: "hires",
-  },
-  {
-    id: "first_bugfix",
-    title: "Bug Exorcist",
-    description: "Fix 1 active bug.",
-    target: 1,
-    value: (currentState) => currentState.totalBugsFixed,
-    unit: "bugs fixed",
-  },
-  {
-    id: "bug_crusher",
-    title: "Incident Commander",
-    description: "Fix 40 bugs in one run.",
-    target: 40,
-    value: (currentState) => currentState.totalBugsFixed,
-    unit: "bugs fixed",
-  },
-  {
-    id: "revenue_first",
-    title: "First Paying User",
-    description: "Reach $500 lifetime revenue.",
-    target: 500,
-    value: (currentState) => currentState.lifetimeDollars,
-    unit: "$",
-  },
-  {
-    id: "revenue_scale",
-    title: "PMF-ish",
-    description: "Reach $50,000 lifetime revenue.",
-    target: 50_000,
-    value: (currentState) => currentState.lifetimeDollars,
-    unit: "$",
-  },
-  {
-    id: "upgrade_collector",
-    title: "Tooling Addict",
-    description: "Buy 15 different upgrades.",
-    target: 15,
-    value: (currentState) => getBoughtUpgradeCount(currentState),
-    unit: "upgrades",
-  },
-  {
-    id: "agent_org",
-    title: "Agentic Org",
-    description: "Hire 5 AI agents.",
-    target: 5,
-    value: (currentState) => currentState.aiAgents,
-    unit: "agents",
-  },
-  {
-    id: "ship_v1",
-    title: "Ship v1.0",
-    description: "Prestige once by releasing v1.0.",
-    target: 1,
-    value: (currentState) => currentState.totalPrestiges,
-    unit: "releases",
-  },
-  {
-    id: "rep_grind",
-    title: "Known in the Industry",
-    description: "Reach 25 reputation.",
-    target: 25,
-    value: (currentState) => currentState.reputation,
-    unit: "rep",
-  },
-];
+const audio = createAudioController({ isGameOver });
 
 const emptyBugItem = document.createElement("li");
 emptyBugItem.className = "bug-item";
@@ -543,321 +106,17 @@ emptyEventItem.setAttribute("data-empty-events", "true");
 emptyEventItem.textContent = "No active events";
 elements.eventList.append(emptyEventItem);
 
-function getAudioContext() {
-  const Ctor = window.AudioContext || window.webkitAudioContext;
-  if (!Ctor) {
-    return null;
-  }
-  return new Ctor();
-}
-
-function ensureAudioStarted() {
-  if (audioState.started) {
-    return;
-  }
-
-  const context = getAudioContext();
-  if (!context) {
-    return;
-  }
-
-  const masterGain = context.createGain();
-  masterGain.gain.value = 0.52;
-  const limiter = context.createDynamicsCompressor();
-  limiter.threshold.value = -16;
-  limiter.knee.value = 12;
-  limiter.ratio.value = 8;
-  limiter.attack.value = 0.003;
-  limiter.release.value = 0.2;
-  masterGain.connect(limiter);
-  limiter.connect(context.destination);
-
-  audioState.context = context;
-  audioState.masterGain = masterGain;
-  audioState.limiter = limiter;
-  audioState.nextNoteTime = context.currentTime + 0.05;
-  audioState.step = 0;
-  audioState.schedulerId = window.setInterval(
-    scheduleChiptuneLoop,
-    AUDIO_LOOKAHEAD_MS,
-  );
-  audioState.started = true;
-}
-
-function scheduleChiptuneLoop() {
-  const context = audioState.context;
-  if (!context) {
-    return;
-  }
-
-  while (
-    audioState.nextNoteTime <
-    context.currentTime + AUDIO_SCHEDULE_AHEAD_SEC
-  ) {
-    scheduleChiptuneStep(audioState.step, audioState.nextNoteTime);
-    audioState.nextNoteTime += getMusicStepDurationSec();
-    audioState.step = (audioState.step + 1) % 64;
-  }
-}
-
-function getMusicStepDurationSec() {
-  return 0.2 - audioState.threatLevel * 0.06;
-}
-
-function setMusicRunning(shouldRun) {
-  if (!audioState.started || !audioState.context) {
-    return;
-  }
-
-  if (shouldRun) {
-    if (audioState.schedulerId) {
-      return;
-    }
-    audioState.nextNoteTime = audioState.context.currentTime + 0.05;
-    audioState.schedulerId = window.setInterval(
-      scheduleChiptuneLoop,
-      AUDIO_LOOKAHEAD_MS,
-    );
-    return;
-  }
-
-  if (audioState.schedulerId) {
-    window.clearInterval(audioState.schedulerId);
-    audioState.schedulerId = 0;
-  }
-}
-
-function scheduleChiptuneStep(step, atTime) {
-  const melody = [
-    523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 440, 493.88, 523.25,
-    659.25, 783.99, 880, 783.99, 659.25, 523.25, 587.33, 659.25, 739.99, 880,
-    739.99, 659.25, 587.33, 493.88, 523.25, 659.25, 783.99, 987.77, 880, 783.99,
-    659.25, 587.33,
-  ];
-  const bass = [
-    130.81, 130.81, 146.83, 146.83, 164.81, 164.81, 146.83, 130.81, 123.47,
-    123.47, 146.83, 146.83, 164.81, 164.81, 174.61, 146.83,
-  ];
-  const arp = [
-    1046.5, 1318.51, 1567.98, 1318.51, 1174.66, 1396.91, 1567.98, 1396.91,
-  ];
-
-  if (step % 2 === 0) {
-    playTone({
-      frequency: melody[(step / 2) % melody.length],
-      duration: 0.12,
-      gain: 0.075,
-      type: "square",
-      atTime,
-    });
-  }
-  if (step % 4 === 0) {
-    playTone({
-      frequency: bass[(step / 4) % bass.length],
-      duration: 0.18,
-      gain: 0.06,
-      type: "square",
-      atTime,
-    });
-  }
-
-  if (step % 2 === 1 && audioState.threatLevel >= 0.4) {
-    playTone({
-      frequency: arp[step % arp.length],
-      duration: 0.08,
-      gain: 0.03 + audioState.threatLevel * 0.02,
-      type: "triangle",
-      atTime,
-    });
-  }
-
-  if (audioState.threatLevel >= 0.72 && step % 4 === 2) {
-    playTone({
-      frequency: 98,
-      duration: 0.045,
-      gain: 0.06 + (audioState.threatLevel - 0.72) * 0.1,
-      type: "sawtooth",
-      atTime,
-    });
-  }
-}
-
-function playTone({
-  frequency,
-  duration,
-  gain,
-  type = "square",
-  atTime = null,
-}) {
-  const context = audioState.context;
-  const masterGain = audioState.masterGain;
-  if (!context || !masterGain) {
-    return;
-  }
-
-  const startTime =
-    typeof atTime === "number"
-      ? Math.max(context.currentTime, atTime)
-      : context.currentTime;
-  const endTime = startTime + duration;
-
-  const osc = context.createOscillator();
-  const amp = context.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(frequency, startTime);
-
-  amp.gain.setValueAtTime(0.0001, startTime);
-  amp.gain.exponentialRampToValueAtTime(
-    Math.max(0.0001, gain),
-    startTime + 0.01,
-  );
-  amp.gain.exponentialRampToValueAtTime(0.0001, endTime);
-
-  osc.connect(amp);
-  amp.connect(masterGain);
-  osc.start(startTime);
-  osc.stop(endTime + 0.01);
-}
-
-function playSfx(type) {
-  ensureAudioStarted();
-  const nowTime = audioState.context ? audioState.context.currentTime : 0;
-  switch (type) {
-    case "click":
-      playTone({ frequency: 880, duration: 0.06, gain: 0.18 });
-      break;
-    case "buy":
-      playTone({ frequency: 523.25, duration: 0.07, gain: 0.16 });
-      playTone({
-        frequency: 783.99,
-        duration: 0.09,
-        gain: 0.14,
-        atTime: nowTime + 0.05,
-      });
-      break;
-    case "fix":
-      playTone({ frequency: 392, duration: 0.06, gain: 0.16 });
-      playTone({
-        frequency: 587.33,
-        duration: 0.08,
-        gain: 0.14,
-        atTime: nowTime + 0.04,
-      });
-      break;
-    case "error":
-      playTone({
-        frequency: 196,
-        duration: 0.08,
-        gain: 0.14,
-        type: "sawtooth",
-      });
-      break;
-    default:
-      break;
-  }
-}
-
-function setAudioThreatLevel(level) {
-  audioState.threatLevel = clamp01(level);
-}
-
-function maybePlayGameOverSfx() {
-  if (!isGameOver(state) || !state.gameOver) {
-    audioState.gameOverAtMsPlayed = null;
-    return;
-  }
-  if (audioState.gameOverAtMsPlayed === state.gameOver.atMs) {
-    return;
-  }
-
-  ensureAudioStarted();
-  const nowTime = audioState.context ? audioState.context.currentTime : 0;
-  const notes = [392, 329.63, 261.63, 196, 130.81];
-  notes.forEach((frequency, index) => {
-    playTone({
-      frequency,
-      duration: 0.2,
-      gain: 0.2 - index * 0.02,
-      type: "sawtooth",
-      atTime: nowTime + index * 0.11,
-    });
-  });
-  audioState.gameOverAtMsPlayed = state.gameOver.atMs;
-}
-
-function playActionSfx(previousState, nextState, action) {
-  if (!action || typeof action !== "object") {
-    return;
-  }
-
-  const type = String(action.type || "");
-  if (type === "CLICK") {
-    playSfx("click");
-    return;
-  }
-  if (type === "HIRE") {
-    const level = String(action.level || "");
-    if (
-      (nextState.developers[level] || 0) >
-      (previousState.developers[level] || 0)
-    ) {
-      playSfx("buy");
-    } else {
-      playSfx("error");
-    }
-    return;
-  }
-  if (type === "HIRE_SUPPORT") {
-    const role = String(action.role || "");
-    if (
-      (nextState.supportTeam[role] || 0) >
-      (previousState.supportTeam[role] || 0)
-    ) {
-      playSfx("buy");
-    } else {
-      playSfx("error");
-    }
-    return;
-  }
-  if (type === "BUY_AI_TOKEN") {
-    if (nextState.aiAgents > previousState.aiAgents) {
-      playSfx("buy");
-    } else {
-      playSfx("error");
-    }
-    return;
-  }
-  if (type === "BUY_UPGRADE" || type === "BUY_PRESTIGE_UPGRADE") {
-    if (
-      nextState.dollars < previousState.dollars ||
-      nextState.reputation < previousState.reputation
-    ) {
-      playSfx("buy");
-    } else {
-      playSfx("error");
-    }
-    return;
-  }
-  if (type === "FIX_BUG") {
-    if (nextState.bugs.length < previousState.bugs.length) {
-      playSfx("fix");
-    } else {
-      playSfx("error");
-    }
-  }
-}
-
 function applyAction(action) {
   if (isGameOver(state)) {
     return;
   }
-  ensureAudioStarted();
-  setMusicRunning(true);
+  audio.ensureStarted();
+  audio.setMusicRunning(true);
   const previousState = state;
-  const nextState = tick(state, { action, nowMs: Date.now() });
-  playActionSfx(previousState, nextState, action);
+  const nextState = store.dispatch(action);
+  audio.playActionSfx(previousState, nextState, action);
   state = nextState;
-  saveState(state, window.localStorage);
+  store.persist();
   render();
 }
 
@@ -916,10 +175,10 @@ elements.prestigeReset.addEventListener("click", () => {
 });
 
 elements.restart.addEventListener("click", () => {
-  state = createInitialState(Date.now());
+  state = store.reset(Date.now());
   resetCodeBackground();
   resetManualFeedback();
-  saveState(state, window.localStorage);
+  store.persist();
   render();
 });
 
@@ -936,10 +195,10 @@ buttons.strategicPostpone.addEventListener("click", () => {
 });
 
 buttons.gameOverRestart.addEventListener("click", () => {
-  state = createInitialState(Date.now());
+  state = store.reset(Date.now());
   resetCodeBackground();
   resetManualFeedback();
-  saveState(state, window.localStorage);
+  store.persist();
   render();
 });
 
@@ -1103,8 +362,8 @@ function performManualWrite() {
   if (isGameOver(state)) {
     return;
   }
-  ensureAudioStarted();
-  setMusicRunning(true);
+  audio.ensureStarted();
+  audio.setMusicRunning(true);
   const nowMs = Date.now();
   const flowMultiplier = getFlowMultiplierForNextWrite(nowMs);
   const gain = getClickLocGain(state) * flowMultiplier;
@@ -1504,12 +763,6 @@ function renderDevelopers() {
   teamHireRows.sre.button.disabled = state.dollars < sreCost || gameOver;
 }
 
-function getBoughtUpgradeCount(currentState) {
-  return ACTIVE_UPGRADE_CATALOG.reduce((count, upgrade) => {
-    return count + (getUpgradeLevel(currentState, upgrade.id) > 0 ? 1 : 0);
-  }, 0);
-}
-
 function getUpgradeRenderState(upgradeId) {
   const row = upgradeRows.get(upgradeId);
   const level = getUpgradeLevel(state, upgradeId);
@@ -1652,20 +905,14 @@ function renderAchievements() {
       return;
     }
 
-    const currentValue = Math.max(0, Number(achievement.value(state)) || 0);
-    const progressValue = Math.min(achievement.target, currentValue);
-    const unlocked = currentValue >= achievement.target;
+    const achievementStatus = getAchievementStatus(achievement, state);
 
-    row.item.classList.toggle("is-unlocked", unlocked);
-    row.item.classList.toggle("is-locked", !unlocked);
-    row.progress.textContent = unlocked
+    row.item.classList.toggle("is-unlocked", achievementStatus.unlocked);
+    row.item.classList.toggle("is-locked", !achievementStatus.unlocked);
+    row.progress.textContent = achievementStatus.unlocked
       ? "Unlocked"
-      : `${formatAchievementProgress(progressValue, achievement.target)} ${achievement.unit}`;
+      : `${achievementStatus.label} ${achievement.unit}`;
   });
-}
-
-function formatAchievementProgress(currentValue, targetValue) {
-  return `${Math.floor(currentValue).toLocaleString()}/${Math.floor(targetValue).toLocaleString()}`;
 }
 
 function createPlaceholder(text) {
@@ -1793,29 +1040,13 @@ function renderPrestige() {
 }
 
 function renderCompanyEvolution() {
-  const lifetimeDollars = Math.max(0, Number(state.lifetimeDollars || 0));
-  let currentIndex = 0;
-
-  for (let i = 0; i < COMPANY_STAGES.length; i++) {
-    if (lifetimeDollars >= COMPANY_STAGES[i].minDollars) {
-      currentIndex = i;
-    }
-  }
-
-  const current = COMPANY_STAGES[currentIndex];
-  const next =
-    COMPANY_STAGES[Math.min(COMPANY_STAGES.length - 1, currentIndex + 1)];
-  const range = Math.max(1, next.minDollars - current.minDollars);
-  const progress =
-    currentIndex >= COMPANY_STAGES.length - 1
-      ? 1
-      : clamp01((lifetimeDollars - current.minDollars) / range);
+  const stage = getCompanyStagePresentation(state.lifetimeDollars);
+  const { current, next, isMaxStage, progress } = stage;
 
   elements.companyStage.textContent = current.label;
-  elements.companyNote.textContent =
-    currentIndex >= COMPANY_STAGES.length - 1
-      ? `${current.note} Peak scale reached.`
-      : `${current.note} Next: ${next.label} at $${next.minDollars.toLocaleString()}.`;
+  elements.companyNote.textContent = isMaxStage
+    ? `${current.note} Peak scale reached.`
+    : `${current.note} Next: ${next.label} at $${next.minDollars.toLocaleString()}.`;
   elements.companyFill.style.width = `${(progress * 100).toFixed(2)}%`;
 
   elements.companyEvolution.classList.remove(
@@ -1930,7 +1161,7 @@ elements.bugList.addEventListener("click", (event) => {
 
 function render() {
   const nowMs = Date.now();
-  setMusicRunning(!isGameOver(state));
+  audio.setMusicRunning(!isGameOver(state));
   expireFlowIfNeeded(nowMs);
   const baseLocPerSecond = getBaseLocPerSecond(state, nowMs);
   const bugPenalty = getBugPenaltyMultiplier(state);
@@ -1962,7 +1193,7 @@ function render() {
   elements.aiBugRisk.textContent = `AI agent bug risk: ~${bugRisk.aiExpectedBugsPerMinute.toFixed(2)} bugs/min per agent`;
   const debt = getTechDebtStatus(state, nowMs);
   const debtPercent = Math.round(debt.progress * 100);
-  setAudioThreatLevel(debt.progress);
+  audio.setThreatLevel(debt.progress);
   elements.techDebtRisk.textContent = `Tech debt risk: ${debt.stage} (${debtPercent}%)`;
   elements.techDebtBugs.textContent = `Bugs: ${debt.bugCount}`;
   elements.techDebtMeta.textContent = `Structural debt: ${Math.floor(debt.techDebtPoints)}`;
@@ -2017,18 +1248,12 @@ function render() {
   renderLocVisual();
   renderTeamVisual();
   renderGameOver();
-  maybePlayGameOverSfx();
+  audio.maybePlayGameOverSfx(state);
   renderComboMeter(nowMs);
   renderFocusTunnel(nowMs);
 
-  const playerHasProgress =
-    state.dollars > 0 ||
-    state.loc > 0 ||
-    getDeveloperCount(state) > 0 ||
-    getVisibleDeveloperCount(state, nowMs) > 0 ||
-    state.totalClicks > 0;
-  if (playerHasProgress) {
-    saveState(state, window.localStorage);
+  if (hasPlayerProgress(state, nowMs)) {
+    store.persist();
   }
 }
 
@@ -2109,22 +1334,12 @@ window.setTimeout(() => {
 }, KEYBOARD_HINT_VISIBLE_MS);
 
 window.setInterval(() => {
-  state = tick(state, { nowMs: Date.now() });
-  saveState(state, window.localStorage);
+  state = store.advance();
+  store.persist();
   render();
 }, 250);
 
 render();
-
-function clamp01(value) {
-  return Math.max(0, Math.min(1, value));
-}
-
-function ratioByLog(value, pivot) {
-  const safeValue = Math.max(0, Number(value) || 0);
-  const safePivot = Math.max(1, Number(pivot) || 1);
-  return clamp01(Math.log10(1 + safeValue) / Math.log10(1 + safePivot));
-}
 
 function setStatCardFill(card, ratio) {
   if (!card) {

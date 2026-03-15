@@ -4,6 +4,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "vite",
+    "build": "vite build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

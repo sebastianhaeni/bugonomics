@@ -1,0 +1,54 @@
+{
+  "id": "./",
+  "name": "Bugonomics",
+  "short_name": "Bugonomics",
+  "description": "A browser idle game about writing code, hiring developers, shipping faster, and surviving the bugs and tech debt.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#05070f",
+  "theme_color": "#0a1224",
+  "categories": ["games", "entertainment", "productivity"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./screenshots/wide.png",
+      "sizes": "1481x1319",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Bugonomics gameplay on desktop"
+    },
+    {
+      "src": "./screenshots/mobile.png",
+      "sizes": "818x1319",
+      "type": "image/png",
+      "label": "Bugonomics gameplay on mobile"
+    }
+  ]
+}

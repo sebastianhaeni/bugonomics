@@ -33,6 +33,20 @@ import {
 import { loadState, saveState } from "./game/persistence.js";
 import { CODE_BACKGROUND_SNIPPETS } from "./game/codeBackgroundSnippets.js";
 
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    const serviceWorkerUrl = new URL("sw.js", document.baseURI);
+    const serviceWorkerScope = new URL("./", document.baseURI).pathname;
+    navigator.serviceWorker
+      .register(serviceWorkerUrl, {
+        scope: serviceWorkerScope,
+      })
+      .catch((error) => {
+        console.error("Service worker registration failed", error);
+      });
+  });
+}
+
 let state = loadState(window.localStorage, Date.now());
 if (!state) {
   state = createInitialState(Date.now());

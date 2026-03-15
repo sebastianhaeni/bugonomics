@@ -1394,7 +1394,9 @@ input {
     flex-direction: column;
     gap: 6px;
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tile-hero,
@@ -1415,8 +1417,13 @@ input {
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero,
-  .game-shell[data-mobile-screen="play"] .tile-actions {
+  .game-shell[data-mobile-screen="play"] .tile-actions,
+  .game-shell[data-mobile-screen="play"] .tile-stats {
     display: block;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-stats {
+    display: grid;
   }
 
   .game-shell[data-mobile-screen="ops"] .tile-debt,
@@ -1461,17 +1468,18 @@ input {
   .game-shell[data-mobile-screen="ops"] .tile-bugs,
   .game-shell[data-mobile-screen="ops"] .tile-events,
   .game-shell[data-mobile-screen="play"] .tile-hero,
-  .game-shell[data-mobile-screen="play"] .tile-actions {
+  .game-shell[data-mobile-screen="play"] .tile-actions,
+  .game-shell[data-mobile-screen="play"] .tile-stats {
     flex: 1 1 auto;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero {
     display: flex;
-    flex: 0 0 clamp(340px, calc(100svh - 300px), 430px);
-    height: clamp(340px, calc(100svh - 300px), 430px);
+    flex: 0 0 clamp(248px, calc(100svh - 395px), 320px);
+    height: clamp(248px, calc(100svh - 395px), 320px);
     flex-direction: column;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     overflow: hidden;
   }
 
@@ -1497,8 +1505,21 @@ input {
     margin: 0;
   }
 
+  .game-shell[data-mobile-screen="play"] .tile-hero .loc-visual-wrap {
+    margin-top: 4px;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .loc-visual {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .loc-line {
+    height: 3px;
+  }
+
   .game-shell[data-mobile-screen="play"] .tile-hero .combo-meter {
-    margin-top: 6px;
+    margin-top: 4px;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .team-visual {
@@ -1509,7 +1530,14 @@ input {
 
   .game-shell[data-mobile-screen="play"] .tile-actions {
     flex: 0 0 auto;
+    order: 3;
     overflow: auto;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-stats {
+    flex: 0 0 auto;
+    order: 2;
+    overflow: hidden;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-actions .risk-readout p {
@@ -1670,6 +1698,15 @@ input {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .game-shell[data-mobile-screen="play"] .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .game-shell[data-mobile-screen="play"] .stats div {
+    padding: 6px 5px;
+  }
+
   .game-shell[data-mobile-screen="ops"] .tile-debt {
     display: block;
   }
@@ -1712,6 +1749,14 @@ input {
 
   .stats strong {
     font-size: 0.86rem;
+  }
+
+  .game-shell[data-mobile-screen="play"] .stats span {
+    font-size: 0.55rem;
+  }
+
+  .game-shell[data-mobile-screen="play"] .stats strong {
+    font-size: 0.72rem;
   }
 
   .loc-visual {

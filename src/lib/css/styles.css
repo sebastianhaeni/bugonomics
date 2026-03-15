@@ -1217,6 +1217,29 @@ input {
   white-space: normal;
 }
 
+.goal-progress {
+  position: relative;
+  height: 10px;
+  margin: 6px 0 5px;
+  overflow: hidden;
+  border: 1px solid rgba(142, 255, 100, 0.32);
+  border-radius: 999px;
+  background: rgba(8, 20, 39, 0.72);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.28);
+}
+
+.goal-progress > span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #43e0ff, #8eff64);
+  box-shadow:
+    0 0 10px rgba(67, 224, 255, 0.34),
+    0 0 14px rgba(142, 255, 100, 0.22);
+  transition: width 0.22s ease;
+}
+
 .strategic-debt {
   border: 1px solid rgba(255, 211, 107, 0.45);
   border-radius: 9px;
@@ -1386,7 +1409,6 @@ input {
   .game-shell {
     height: 100%;
     min-height: 0;
-    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
 
   .dashboard {
@@ -1396,6 +1418,8 @@ input {
     height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    scroll-padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1475,21 +1499,16 @@ input {
 
   .game-shell[data-mobile-screen="play"] .tile-hero {
     display: flex;
-    flex: 0 0 clamp(248px, calc(100svh - 395px), 320px);
-    height: clamp(248px, calc(100svh - 395px), 320px);
+    flex: 0 0 clamp(220px, calc(100svh - 430px), 284px);
+    height: clamp(220px, calc(100svh - 430px), 284px);
     flex-direction: column;
     justify-content: space-between;
-    gap: 8px;
+    gap: 6px;
     overflow: hidden;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .subtitle,
   .game-shell[data-mobile-screen="play"] .tile-hero .combo-bursts {
-    display: none;
-  }
-
-  .game-shell[data-mobile-screen="play"] .tile-hero [data-ui="company-note"],
-  .game-shell[data-mobile-screen="play"] .tile-hero .company-progress {
     display: none;
   }
 
@@ -1501,25 +1520,41 @@ input {
     align-items: center;
   }
 
+  .game-shell[data-mobile-screen="play"] .tile-hero [data-ui="company-note"] {
+    margin: 2px 0 0;
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .company-progress {
+    margin-top: 4px;
+  }
+
   .game-shell[data-mobile-screen="play"] .tile-hero .click-primary-wrap {
     margin: 0;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .loc-visual-wrap {
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .loc-visual {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 2px;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .loc-line {
-    height: 3px;
+    height: 2px;
+  }
+
+  .game-shell[data-mobile-screen="play"]
+    .tile-hero
+    .loc-line:nth-child(n + 26) {
+    display: none;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .combo-meter {
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .team-visual {

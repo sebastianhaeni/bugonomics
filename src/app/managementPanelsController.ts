@@ -78,6 +78,7 @@ interface ManagementPanelsOptions {
     prestigeUpgradeList: HTMLElement;
     goalTarget: HTMLElement;
     goalProgress: HTMLElement;
+    goalProgressFill: HTMLElement;
     goalReward: HTMLElement;
     prestigeReset: HTMLButtonElement;
   };
@@ -667,7 +668,8 @@ export function createManagementPanelsController({
         ? `Release Version ${releaseVersion}.0 (+${gain} Reputation)`
         : `Release Version ${releaseVersion}.0 (Not Ready)`;
     elements.prestigeReset.disabled = gain <= 0;
-    elements.goalProgress.textContent = `Progress: ${(goalProgress * 100).toFixed(1)}% (${Math.floor(state.lifetimeLoc).toLocaleString()} / ${releaseLocTarget.toLocaleString()} LOC)`;
+    elements.goalProgressFill.style.width = `${(goalProgress * 100).toFixed(1)}%`;
+    elements.goalProgress.textContent = `${Math.floor(state.lifetimeLoc).toLocaleString()} / ${releaseLocTarget.toLocaleString()} LOC (${(goalProgress * 100).toFixed(1)}%)`;
     elements.goalReward.textContent = `Reputation on release v${releaseVersion}.0: +${gain}`;
 
     prestigeRows.forEach((row, upgradeId) => {

@@ -24,8 +24,9 @@ export interface ShellElements {
   eventList: HTMLElement;
   prestigeReset: HTMLButtonElement;
   restart: HTMLButtonElement;
-  goalProgress: HTMLElement;
   goalTarget: HTMLElement;
+  goalProgress: HTMLElement;
+  goalProgressFill: HTMLElement;
   goalReward: HTMLElement;
   prestigeUpgradeList: HTMLElement;
   tradeoffModes: HTMLElement;
@@ -165,7 +166,10 @@ export function mountGameShell(appRoot: Element): {
             <section class="goal-panel">
               <h2>Release Goal</h2>
               <p class="status-line" data-ui="release-goal-target">Release Version 1.0 at 0 lifetime LOC.</p>
-              <p class="status-line" data-ui="release-goal-progress">Progress: 0%</p>
+              <div class="goal-progress" aria-hidden="true">
+                <span data-ui="release-goal-progress-fill"></span>
+              </div>
+              <p class="status-line" data-ui="release-goal-progress">0 / 0 LOC</p>
               <p class="status-line" data-ui="release-goal-reward">Reputation on release: +0</p>
               <div class="prestige-actions">
                 <button data-ui="prestige-reset-btn">Release Version 1.0 (Reset for Reputation)</button>
@@ -311,8 +315,12 @@ export function mountGameShell(appRoot: Element): {
     eventList: mustQuery(appRoot, '[data-ui="event-list"]'),
     prestigeReset: mustQuery(appRoot, '[data-ui="prestige-reset-btn"]'),
     restart: mustQuery(appRoot, '[data-ui="restart-btn"]'),
-    goalProgress: mustQuery(appRoot, '[data-ui="release-goal-progress"]'),
     goalTarget: mustQuery(appRoot, '[data-ui="release-goal-target"]'),
+    goalProgress: mustQuery(appRoot, '[data-ui="release-goal-progress"]'),
+    goalProgressFill: mustQuery(
+      appRoot,
+      '[data-ui="release-goal-progress-fill"]',
+    ),
     goalReward: mustQuery(appRoot, '[data-ui="release-goal-reward"]'),
     prestigeUpgradeList: mustQuery(
       appRoot,

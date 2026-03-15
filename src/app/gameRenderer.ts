@@ -166,7 +166,7 @@ export function createGameRenderer({
   function initMobileNav(): void {
     const handleNavInteraction = (event: Event): void => {
       const target = event.target;
-      if (!(target instanceof HTMLElement)) {
+      if (!(target instanceof Element)) {
         return;
       }
       const button = target.closest<HTMLButtonElement>(
@@ -190,7 +190,7 @@ export function createGameRenderer({
 
     elements.mobileNav.addEventListener("pointerdown", (event) => {
       const target = event.target;
-      if (!(target instanceof HTMLElement)) {
+      if (!(target instanceof Element)) {
         return;
       }
       if (!target.closest("button[data-screen-id]")) {

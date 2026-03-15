@@ -85,10 +85,10 @@ body {
   .tile-shop,
   .tile-owned,
   .tile-utility,
-  [data-cy="developers"],
-  [data-cy="prestige-upgrade-list"],
-  [data-cy="bug-list"],
-  [data-cy="event-list"]
+  [data-ui="developers"],
+  [data-ui="prestige-upgrade-list"],
+  [data-ui="bug-list"],
+  [data-ui="event-list"]
 ) {
   scrollbar-color: rgba(67, 224, 255, 0.76) rgba(8, 20, 39, 0.72);
   scrollbar-width: thin;
@@ -99,10 +99,10 @@ body {
   .tile-shop,
   .tile-owned,
   .tile-utility,
-  [data-cy="developers"],
-  [data-cy="prestige-upgrade-list"],
-  [data-cy="bug-list"],
-  [data-cy="event-list"]
+  [data-ui="developers"],
+  [data-ui="prestige-upgrade-list"],
+  [data-ui="bug-list"],
+  [data-ui="event-list"]
 )::-webkit-scrollbar {
   width: 11px;
 }
@@ -111,10 +111,10 @@ body {
   .tile-shop,
   .tile-owned,
   .tile-utility,
-  [data-cy="developers"],
-  [data-cy="prestige-upgrade-list"],
-  [data-cy="bug-list"],
-  [data-cy="event-list"]
+  [data-ui="developers"],
+  [data-ui="prestige-upgrade-list"],
+  [data-ui="bug-list"],
+  [data-ui="event-list"]
 )::-webkit-scrollbar-thumb {
   border-color: rgba(67, 224, 255, 0.55);
   box-shadow: 0 0 10px rgba(67, 224, 255, 0.34);
@@ -124,10 +124,10 @@ body {
     .tile-shop,
     .tile-owned,
     .tile-utility,
-    [data-cy="developers"],
-    [data-cy="prestige-upgrade-list"],
-    [data-cy="bug-list"],
-    [data-cy="event-list"]
+    [data-ui="developers"],
+    [data-ui="prestige-upgrade-list"],
+    [data-ui="bug-list"],
+    [data-ui="event-list"]
   ):hover::-webkit-scrollbar-thumb {
   border-color: rgba(142, 255, 100, 0.96);
   background: linear-gradient(
@@ -1226,7 +1226,7 @@ input {
   margin-top: 6px;
 }
 
-.strategic-actions button[data-cy="strategic-postpone-btn"].is-auto-postpone {
+.strategic-actions button[data-ui="strategic-postpone-btn"].is-auto-postpone {
   position: relative;
   overflow: hidden;
   border-color: rgba(255, 153, 188, 0.85);
@@ -1265,29 +1265,29 @@ input {
   margin-top: 6px;
 }
 
-[data-cy="developers"],
-[data-cy="prestige-upgrade-list"],
-[data-cy="bug-list"],
-[data-cy="event-list"] {
+[data-ui="developers"],
+[data-ui="prestige-upgrade-list"],
+[data-ui="bug-list"],
+[data-ui="event-list"] {
   max-height: 100%;
   overflow: auto;
   padding-right: 2px;
 }
 
-[data-cy="upgrade-owned-list"],
-[data-cy="achievement-list"] {
+[data-ui="upgrade-owned-list"],
+[data-ui="achievement-list"] {
   max-height: none;
   overflow: visible;
   padding-right: 0;
 }
 
-[data-cy="upgrade-shop-list"] {
+[data-ui="upgrade-shop-list"] {
   max-height: none;
   overflow: visible;
   padding-right: 0;
 }
 
-[data-cy="upgrade-locked-list"] {
+[data-ui="upgrade-locked-list"] {
   max-height: none;
   overflow: visible;
   padding-right: 0;

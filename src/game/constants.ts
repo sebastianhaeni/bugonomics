@@ -1,6 +1,19 @@
+import type {
+  AbilityDefinition,
+  DeveloperConfig,
+  DeveloperLevel,
+  PrestigeUpgradeDefinition,
+  RandomEventDefinition,
+  StrategicDebtItem,
+  SupportRole,
+  SupportRoleConfig,
+  TradeoffModeDefinition,
+  UpgradeDefinition,
+} from "./types.js";
+
 export const STORAGE_KEY = "skills17.frontend.loc-clicker.state.v1";
 
-export const DEVELOPER_LEVELS = {
+export const DEVELOPER_LEVELS: Record<DeveloperLevel, DeveloperConfig> = {
   junior: {
     label: "Jr Developer",
     hireCostLoc: 18,
@@ -23,7 +36,7 @@ export const DEVELOPER_LEVELS = {
   },
 };
 
-export const PRODUCT_TEAM_ROLES = {
+export const PRODUCT_TEAM_ROLES: Record<SupportRole, SupportRoleConfig> = {
   product: {
     label: "Product Manager",
     hireCostLoc: 260,
@@ -54,7 +67,7 @@ export const TECH_DEBT_REPAIR_BASE_COST = 120;
 export const TECH_DEBT_REPAIR_LOC_TO_DEBT_FACTOR = 1.35;
 export const TECH_DEBT_STRATEGIC_CHECK_INTERVAL_MS = 45_000;
 
-export const BUG_TITLES = [
+export const BUG_TITLES: string[] = [
   "Null Pointer Panic",
   "Off-by-One Apocalypse",
   "Race Condition Relay",
@@ -156,7 +169,7 @@ export const BUG_TITLES = [
   "Works on My Machine",
 ];
 
-export const STRATEGIC_TECH_DEBT_ITEMS = [
+export const STRATEGIC_TECH_DEBT_ITEMS: StrategicDebtItem[] = [
   {
     id: "rewrite-renderer",
     title: "Rewrite Rendering Component",
@@ -197,7 +210,7 @@ export const STRATEGIC_TECH_DEBT_ITEMS = [
 export const PRESTIGE_LOC_THRESHOLD = 1_000_000;
 export const PRESTIGE_LOC_SCALING = 1.85;
 
-export const UPGRADE_CATALOG = [
+export const UPGRADE_CATALOG: UpgradeDefinition[] = [
   {
     id: "better_keyboard",
     name: "Better Keyboard",
@@ -769,7 +782,7 @@ export const UPGRADE_CATALOG = [
   },
 ];
 
-export const PRESTIGE_UPGRADES = [
+export const PRESTIGE_UPGRADES: PrestigeUpgradeDefinition[] = [
   {
     id: "better_hiring_brand",
     name: "Better Hiring Brand",
@@ -828,7 +841,7 @@ export const PRESTIGE_UPGRADES = [
   },
 ];
 
-export const RANDOM_EVENTS = [
+export const RANDOM_EVENTS: RandomEventDefinition[] = [
   {
     id: "production_outage",
     name: "Production Outage",
@@ -920,7 +933,7 @@ export const RANDOM_EVENTS = [
   },
 ];
 
-export const TRADEOFF_MODES = [
+export const TRADEOFF_MODES: TradeoffModeDefinition[] = [
   {
     id: "balanced",
     label: "Balanced",
@@ -953,7 +966,7 @@ export const TRADEOFF_MODES = [
   },
 ];
 
-export const ABILITIES = [
+export const ABILITIES: AbilityDefinition[] = [
   {
     id: "crunch_time",
     unlockUpgradeId: "unlock_crunch_time",

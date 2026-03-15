@@ -1,23 +1,42 @@
 import { clamp01 } from "./math.js";
+import type { GameAction, GameState } from "../game/types.js";
 
-export function createAudioController({ windowObject = window, isGameOver }) {
+interface AudioControllerOptions {
+  windowObject?: Window & typeof globalThis;
+  isGameOver: (state: GameState) => boolean;
+}
+
+interface ToneOptions {
+  frequency: number;
+  duration: number;
+  gain: number;
+  type?: OscillatorType;
+  atTime?: number | null;
+}
+
+export function createAudioController({
+  windowObject = window,
+  isGameOver,
+}: AudioControllerOptions) {
   const AUDIO_LOOKAHEAD_MS = 120;
   const AUDIO_SCHEDULE_AHEAD_SEC = 0.35;
 
   const state = {
-    context: null,
-    masterGain: null,
-    limiter: null,
+    context: null as AudioContext | null,
+    masterGain: null as GainNode | null,
+    limiter: null as DynamicsCompressorNode | null,
     started: false,
     schedulerId: 0,
     nextNoteTime: 0,
     step: 0,
     threatLevel: 0,
-    gameOverAtMsPlayed: null,
+    gameOverAtMsPlayed: null as number | null,
   };
 
   function getAudioContext() {
-    const Ctor = windowObject.AudioContext || windowObject.webkitAudioContext;
+    const legacyWindow = windowObject as Window &
+      typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+    const Ctor = legacyWindow.AudioContext || legacyWindow.webkitAudioContext;
     if (!Ctor) {
       return null;
     }
@@ -77,7 +96,7 @@ export function createAudioController({ windowObject = window, isGameOver }) {
     return 0.2 - state.threatLevel * 0.06;
   }
 
-  function setMusicRunning(shouldRun) {
+  function setMusicRunning(shouldRun: boolean): void {
     if (!state.started || !state.context) {
       return;
     }
@@ -100,7 +119,7 @@ export function createAudioController({ windowObject = window, isGameOver }) {
     }
   }
 
-  function scheduleChiptuneStep(step, atTime) {
+  function scheduleChiptuneStep(step: number, atTime: number): void {
     const melody = [
       523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 440, 493.88,
       523.25, 659.25, 783.99, 880, 783.99, 659.25, 523.25, 587.33, 659.25,
@@ -161,7 +180,7 @@ export function createAudioController({ windowObject = window, isGameOver }) {
     gain,
     type = "square",
     atTime = null,
-  }) {
+  }: ToneOptions): void {
     const context = state.context;
     const masterGain = state.masterGain;
     if (!context || !masterGain) {
@@ -192,7 +211,7 @@ export function createAudioController({ windowObject = window, isGameOver }) {
     osc.stop(endTime + 0.01);
   }
 
-  function playSfx(type) {
+  function playSfx(type: "click" | "buy" | "fix" | "error"): void {
     ensureStarted();
     const nowTime = state.context ? state.context.currentTime : 0;
     switch (type) {
@@ -230,11 +249,11 @@ export function createAudioController({ windowObject = window, isGameOver }) {
     }
   }
 
-  function setThreatLevel(level) {
+  function setThreatLevel(level: number): void {
     state.threatLevel = clamp01(level);
   }
 
-  function maybePlayGameOverSfx(gameState) {
+  function maybePlayGameOverSfx(gameState: GameState): void {
     if (!isGameOver(gameState) || !gameState.gameOver) {
       state.gameOverAtMsPlayed = null;
       return;
@@ -258,18 +277,21 @@ export function createAudioController({ windowObject = window, isGameOver }) {
     state.gameOverAtMsPlayed = gameState.gameOver.atMs;
   }
 
-  function playActionSfx(previousState, nextState, action) {
+  function playActionSfx(
+    previousState: GameState,
+    nextState: GameState,
+    action: GameAction | null | undefined,
+  ): void {
     if (!action || typeof action !== "object") {
       return;
     }
 
-    const type = String(action.type || "");
-    if (type === "CLICK") {
+    if (action.type === "CLICK") {
       playSfx("click");
       return;
     }
-    if (type === "HIRE") {
-      const level = String(action.level || "");
+    if (action.type === "HIRE") {
+      const level = action.level;
       playSfx(
         (nextState.developers[level] || 0) >
           (previousState.developers[level] || 0)
@@ -278,8 +300,8 @@ export function createAudioController({ windowObject = window, isGameOver }) {
       );
       return;
     }
-    if (type === "HIRE_SUPPORT") {
-      const role = String(action.role || "");
+    if (action.type === "HIRE_SUPPORT") {
+      const role = action.role;
       playSfx(
         (nextState.supportTeam[role] || 0) >
           (previousState.supportTeam[role] || 0)
@@ -288,11 +310,14 @@ export function createAudioController({ windowObject = window, isGameOver }) {
       );
       return;
     }
-    if (type === "BUY_AI_TOKEN") {
+    if (action.type === "BUY_AI_TOKEN") {
       playSfx(nextState.aiAgents > previousState.aiAgents ? "buy" : "error");
       return;
     }
-    if (type === "BUY_UPGRADE" || type === "BUY_PRESTIGE_UPGRADE") {
+    if (
+      action.type === "BUY_UPGRADE" ||
+      action.type === "BUY_PRESTIGE_UPGRADE"
+    ) {
       playSfx(
         nextState.dollars < previousState.dollars ||
           nextState.reputation < previousState.reputation
@@ -301,7 +326,7 @@ export function createAudioController({ windowObject = window, isGameOver }) {
       );
       return;
     }
-    if (type === "FIX_BUG") {
+    if (action.type === "FIX_BUG") {
       playSfx(
         nextState.bugs.length < previousState.bugs.length ? "fix" : "error",
       );

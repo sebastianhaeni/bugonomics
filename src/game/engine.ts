@@ -25,8 +25,19 @@ import {
   TRADEOFF_MODES,
   UPGRADE_CATALOG,
 } from "./constants.js";
+import type {
+  BugRiskSummary,
+  DeveloperLevel,
+  GameAction,
+  GameState,
+  GameStateInput,
+  SupportRole,
+  TechDebtStatus,
+  TickOptions,
+} from "./types.js";
 
-const LEVEL_KEYS = Object.keys(DEVELOPER_LEVELS);
+const LEVEL_KEYS = Object.keys(DEVELOPER_LEVELS) as DeveloperLevel[];
+const SUPPORT_ROLE_KEYS = Object.keys(PRODUCT_TEAM_ROLES) as SupportRole[];
 const UPGRADE_BY_ID = new Map(
   UPGRADE_CATALOG.map((upgrade) => [upgrade.id, upgrade]),
 );
@@ -37,7 +48,7 @@ const ABILITY_BY_ID = new Map(
   ABILITIES.map((ability) => [ability.id, ability]),
 );
 
-export function createInitialState(nowMs = Date.now()) {
+export function createInitialState(nowMs = Date.now()): GameState {
   return {
     loc: 0,
     lifetimeLoc: 0,
@@ -54,6 +65,7 @@ export function createInitialState(nowMs = Date.now()) {
     supportTeam: {
       product: 0,
       ux: 0,
+      sre: 0,
     },
     activeBoosts: [],
     clickAuras: [],
@@ -85,7 +97,10 @@ export function createInitialState(nowMs = Date.now()) {
   };
 }
 
-export function normalizeState(inputState, nowMs = Date.now()) {
+export function normalizeState(
+  inputState: GameStateInput | null | undefined,
+  nowMs = Date.now(),
+): GameState {
   const defaultState = createInitialState(nowMs);
   const source = inputState && typeof inputState === "object" ? inputState : {};
 
@@ -216,7 +231,7 @@ export function normalizeState(inputState, nowMs = Date.now()) {
       Math.floor(toNumber(normalized.developers[level], 0)),
     );
   }
-  for (const role of Object.keys(PRODUCT_TEAM_ROLES)) {
+  for (const role of SUPPORT_ROLE_KEYS) {
     normalized.supportTeam[role] = Math.max(
       0,
       Math.floor(toNumber(normalized.supportTeam[role], 0)),
@@ -310,9 +325,9 @@ export function normalizeState(inputState, nowMs = Date.now()) {
 }
 
 export function tick(
-  state,
-  { action = null, nowMs = Date.now(), random = Math.random } = {},
-) {
+  state: GameState,
+  { action = null, nowMs = Date.now(), random = Math.random }: TickOptions = {},
+): GameState {
   const nextState = normalizeState(state, nowMs);
   const safeRandom = typeof random === "function" ? random : Math.random;
 
@@ -382,14 +397,14 @@ export function tick(
   return nextState;
 }
 
-export function getDeveloperCount(state) {
+export function getDeveloperCount(state: GameState): number {
   return LEVEL_KEYS.reduce(
     (sum, level) => sum + Math.max(0, state.developers[level] || 0),
     0,
   );
 }
 
-export function getVisibleDeveloperCount(state, nowMs = Date.now()) {
+export function getVisibleDeveloperCount(state: GameState, nowMs = Date.now()): number {
   const total = getDeveloperCount(state);
   const lost = getLostDeveloperCountFromEvents(state, nowMs);
   return (
@@ -399,7 +414,7 @@ export function getVisibleDeveloperCount(state, nowMs = Date.now()) {
   );
 }
 
-export function getBaseLocPerSecond(state, nowMs = Date.now()) {
+export function getBaseLocPerSecond(state: GameState, nowMs = Date.now()): number {
   const visibleDevs = getVisibleDeveloperCount(state, nowMs);
   if (visibleDevs <= 0) {
     return getFlatLocPerSecondBonus(state);
@@ -463,7 +478,7 @@ export function getBaseLocPerSecond(state, nowMs = Date.now()) {
   return totalDevProduction + getFlatLocPerSecondBonus(state);
 }
 
-export function getBugPenaltyMultiplier(state) {
+export function getBugPenaltyMultiplier(state: GameState): number {
   const totalSeverity = state.bugs.reduce(
     (sum, bug) => sum + clamp(toNumber(bug.severity, 0), 0, 1),
     0,
@@ -482,7 +497,7 @@ export function getBugPenaltyMultiplier(state) {
   return clamp(penalty, MIN_PRODUCTION_MULTIPLIER, 1.2);
 }
 
-export function getActiveBoostMultiplierAt(state, atMs) {
+function getActiveBoostMultiplierAt(state: GameState, atMs: number): number {
   return state.activeBoosts.reduce((multiplier, boost) => {
     if (boost.expiresAt > atMs) {
       return multiplier * Math.max(0.1, boost.multiplier);
@@ -491,7 +506,7 @@ export function getActiveBoostMultiplierAt(state, atMs) {
   }, 1);
 }
 
-export function getClickLocGain(state) {
+export function getClickLocGain(state: GameState): number {
   let clickLoc = 1;
   clickLoc += getUpgradeLevel(state, "better_keyboard") * 1;
   clickLoc += getUpgradeLevel(state, "mechanical_keyboard") * 5;
@@ -513,7 +528,7 @@ export function getClickLocGain(state) {
   return clickLoc * globalClickMultiplier;
 }
 
-export function getLocDollarConversionRate(state) {
+export function getLocDollarConversionRate(state: GameState): number {
   const developers = state.developers;
   const support = state.supportTeam;
   const aiAgents = getAiAgentCount(state);
@@ -567,19 +582,25 @@ export function getLocDollarConversionRate(state) {
   return clamp(conversion, 0.08, 1.85);
 }
 
-export function getUpgradeLevel(state, upgradeId) {
+export function getUpgradeLevel(
+  state: Partial<GameState> | null | undefined,
+  upgradeId: string,
+): number {
   return clampInt(state?.upgrades?.[upgradeId], 0, 10_000);
 }
 
-export function getAiAgentCount(state) {
+function getAiAgentCount(state: Partial<GameState> | null | undefined): number {
   return Math.max(0, Math.floor(toNumber(state?.aiAgents, 0)));
 }
 
-export function getPrestigeUpgradeLevel(state, upgradeId) {
+export function getPrestigeUpgradeLevel(
+  state: Partial<GameState> | null | undefined,
+  upgradeId: string,
+): number {
   return clampInt(state?.prestigeUpgrades?.[upgradeId], 0, 10_000);
 }
 
-export function getUpgradeCost(state, upgradeId) {
+export function getUpgradeCost(state: GameState, upgradeId: string): number {
   const upgrade = UPGRADE_BY_ID.get(upgradeId);
   if (!upgrade) {
     return Infinity;
@@ -595,7 +616,7 @@ export function getUpgradeCost(state, upgradeId) {
   return Math.ceil((upgrade.costLoc || 0) * scaling * discount);
 }
 
-export function getHireCost(state, level) {
+export function getHireCost(state: GameState, level: DeveloperLevel): number {
   if (!DEVELOPER_LEVELS[level]) {
     return Infinity;
   }
@@ -604,11 +625,11 @@ export function getHireCost(state, level) {
   );
 }
 
-export function getAiTokenCost(state) {
+export function getAiTokenCost(state: GameState): number {
   return Math.ceil(AI_TOKEN_LOC_COST * getAiTokenCostMultiplier(state));
 }
 
-export function getSupportHireCost(state, role) {
+export function getSupportHireCost(state: GameState, role: SupportRole): number {
   if (!PRODUCT_TEAM_ROLES[role]) {
     return Infinity;
   }
@@ -620,7 +641,7 @@ export function getSupportHireCost(state, role) {
   );
 }
 
-export function getPrestigeUpgradeCost(state, upgradeId) {
+export function getPrestigeUpgradeCost(state: GameState, upgradeId: string): number {
   const upgrade = PRESTIGE_UPGRADE_BY_ID.get(upgradeId);
   if (!upgrade) {
     return Infinity;
@@ -634,7 +655,7 @@ export function getPrestigeUpgradeCost(state, upgradeId) {
   return Math.ceil((upgrade.costReputation || 0) * (1 + level * 0.5));
 }
 
-export function getPrestigeGain(state) {
+export function getPrestigeGain(state: GameState): number {
   const threshold = getPrestigeLocThreshold(state);
   if (state.lifetimeLoc < threshold) {
     return 0;
@@ -646,31 +667,18 @@ export function getPrestigeGain(state) {
   return Math.max(1, Math.floor(gain));
 }
 
-export function getReleaseVersion(state) {
+export function getReleaseVersion(state: Partial<GameState> | null | undefined): number {
   return Math.max(1, Math.floor(toNumber(state?.totalPrestiges, 0)) + 1);
 }
 
-export function getPrestigeLocThreshold(state) {
+export function getPrestigeLocThreshold(state: Partial<GameState> | null | undefined): number {
   const releaseVersion = getReleaseVersion(state);
   const threshold =
     PRESTIGE_LOC_THRESHOLD * Math.pow(PRESTIGE_LOC_SCALING, releaseVersion - 1);
   return Math.max(PRESTIGE_LOC_THRESHOLD, Math.floor(threshold));
 }
 
-export function getAbilityStatus(state, nowMs = Date.now()) {
-  return ABILITIES.map((ability) => {
-    const unlocked = getUpgradeLevel(state, ability.unlockUpgradeId) > 0;
-    const cooldownUntil = toNumber(state.abilityCooldowns[ability.id], 0);
-    return {
-      ...ability,
-      unlocked,
-      isReady: unlocked && cooldownUntil <= nowMs,
-      cooldownMsLeft: Math.max(0, cooldownUntil - nowMs),
-    };
-  });
-}
-
-export function getBugRiskSummary(state, nowMs = Date.now()) {
+export function getBugRiskSummary(state: GameState, nowMs = Date.now()): BugRiskSummary {
   const bugChanceMultiplier = getBugChanceMultiplier(state, nowMs);
   const activeBoostCount = state.activeBoosts.filter(
     (boost) => boost.expiresAt > nowMs,
@@ -699,11 +707,11 @@ export function getBugRiskSummary(state, nowMs = Date.now()) {
   };
 }
 
-export function isGameOver(state) {
+export function isGameOver(state: Partial<GameState> | null | undefined): boolean {
   return Boolean(state?.gameOver);
 }
 
-export function getTechDebtStatus(state, nowMs = Date.now()) {
+export function getTechDebtStatus(state: GameState, nowMs = Date.now()): TechDebtStatus {
   const bugCount = state.bugs.length;
   const totalSeverity = state.bugs.reduce((sum, bug) => sum + bug.severity, 0);
   const bugPenalty = getBugPenaltyMultiplier(state);
@@ -759,12 +767,17 @@ export function getTechDebtStatus(state, nowMs = Date.now()) {
   };
 }
 
-export function getTechDebtRepairCost(state) {
+export function getTechDebtRepairCost(state: GameState): number {
   const pressure = Math.min(1.8, 1 + state.techDebtPoints / 3000);
   return Math.ceil(TECH_DEBT_REPAIR_BASE_COST * pressure);
 }
 
-function applyAction(state, action, nowMs, random) {
+function applyAction(
+  state: GameState,
+  action: GameAction | null | undefined,
+  nowMs: number,
+  random: () => number,
+): void {
   if (!action || typeof action !== "object") {
     return;
   }
@@ -827,11 +840,7 @@ function applyAction(state, action, nowMs, random) {
   }
 
   if (action.type === "HIRE_SUPPORT") {
-    const role = String(action.role || "");
-    if (!PRODUCT_TEAM_ROLES[role]) {
-      return;
-    }
-
+    const role = action.role;
     const cost = getSupportHireCost(state, role);
     if (state.dollars >= cost) {
       state.dollars -= cost;
@@ -1067,7 +1076,7 @@ function applyAction(state, action, nowMs, random) {
   }
 
   if (action.type === "SET_TRADEOFF_MODE") {
-    const modeId = String(action.modeId || "");
+    const modeId = action.modeId;
     if (TRADEOFF_MODES.some((mode) => mode.id === modeId)) {
       state.tradeoffMode = modeId;
     }
@@ -1105,13 +1114,13 @@ function applyAction(state, action, nowMs, random) {
   void random;
 }
 
-function hasRequiredUpgrades(state, requiredIds) {
+function hasRequiredUpgrades(state: GameState, requiredIds: string[]): boolean {
   return requiredIds.every(
     (upgradeId) => getUpgradeLevel(state, upgradeId) > 0,
   );
 }
 
-function getClickAuraLocPerSecond(state, nowMs) {
+function getClickAuraLocPerSecond(state: GameState, nowMs: number): number {
   return state.clickAuras.reduce((sum, aura) => {
     if (aura.expiresAt > nowMs) {
       return sum + aura.locPerSecond;
@@ -1120,7 +1129,7 @@ function getClickAuraLocPerSecond(state, nowMs) {
   }, 0);
 }
 
-function getGlobalProductionMultiplier(state) {
+function getGlobalProductionMultiplier(state: GameState): number {
   let multiplier = 1;
 
   multiplier *= 1 + 0.1 * getUpgradeLevel(state, "tech_debt_cleanup");
@@ -1160,14 +1169,14 @@ function getGlobalProductionMultiplier(state) {
   return multiplier;
 }
 
-function getFlatLocPerSecondBonus(state) {
+function getFlatLocPerSecondBonus(state: GameState): number {
   return (
     getUpgradeLevel(state, "build_cache") * 3 +
     getUpgradeLevel(state, "faster_ci") * 4
   );
 }
 
-function getDeveloperCostMultiplier(state) {
+function getDeveloperCostMultiplier(state: GameState): number {
   let multiplier = 1;
 
   multiplier *= 1 - 0.08 * getUpgradeLevel(state, "hiring_pipeline");
@@ -1182,7 +1191,7 @@ function getDeveloperCostMultiplier(state) {
   return clamp(multiplier, 0.4, 2.5);
 }
 
-function getUpgradeDiscountMultiplier(state) {
+function getUpgradeDiscountMultiplier(state: GameState): number {
   const fameDiscount =
     0.06 * getPrestigeUpgradeLevel(state, "open_source_fame");
   const wardleyDiscount = 0.03 * getUpgradeLevel(state, "wardley_map_session");
@@ -1195,24 +1204,24 @@ function getUpgradeDiscountMultiplier(state) {
   );
 }
 
-function getAiTokenCostMultiplier(state) {
+function getAiTokenCostMultiplier(state: GameState): number {
   const templateDiscount = 0.1 * getUpgradeLevel(state, "prompt_templates");
   const promptopsDiscount = 0.08 * getUpgradeLevel(state, "promptops_playbook");
   return clamp(1 - templateDiscount - promptopsDiscount, 0.35, 1);
 }
 
-function getAiBoostDurationMs(state) {
+function getAiBoostDurationMs(state: GameState): number {
   return (
     AI_BOOST_DURATION_MS +
     getUpgradeLevel(state, "larger_context_window") * 5_000
   );
 }
 
-function getAiBoostMultiplier(state) {
+function getAiBoostMultiplier(state: GameState): number {
   return AI_BOOST_MULTIPLIER + getUpgradeLevel(state, "better_models") * 0.5;
 }
 
-function getEventProductionMultiplier(state, nowMs) {
+function getEventProductionMultiplier(state: GameState, nowMs: number): number {
   return state.activeEvents.reduce((multiplier, event) => {
     if (event.expiresAt > nowMs) {
       return multiplier * Math.max(0.1, event.productionMultiplier || 1);
@@ -1221,7 +1230,7 @@ function getEventProductionMultiplier(state, nowMs) {
   }, 1);
 }
 
-function getLostDeveloperCountFromEvents(state, nowMs) {
+function getLostDeveloperCountFromEvents(state: GameState, nowMs: number): number {
   return state.activeEvents.reduce((lost, event) => {
     if (event.expiresAt > nowMs && event.lostDevCount > 0) {
       return lost + event.lostDevCount;
@@ -1230,7 +1239,7 @@ function getLostDeveloperCountFromEvents(state, nowMs) {
   }, 0);
 }
 
-function getHackathonTemporaryDevelopers(state, nowMs) {
+function getHackathonTemporaryDevelopers(state: GameState, nowMs: number): number {
   return state.activeEvents.reduce((sum, event) => {
     if (event.id === "hackathon" && event.expiresAt > nowMs) {
       return sum + 3;
@@ -1239,7 +1248,7 @@ function getHackathonTemporaryDevelopers(state, nowMs) {
   }, 0);
 }
 
-function getHackathonTemporaryLocPerSecond(state, nowMs) {
+function getHackathonTemporaryLocPerSecond(state: GameState, nowMs: number): number {
   if (getHackathonTemporaryDevelopers(state, nowMs) <= 0) {
     return 0;
   }
@@ -1249,7 +1258,7 @@ function getHackathonTemporaryLocPerSecond(state, nowMs) {
   );
 }
 
-function getBugChanceMultiplier(state, nowMs) {
+function getBugChanceMultiplier(state: GameState, nowMs: number): number {
   let multiplier = 1;
 
   multiplier *= 1 - 0.2 * getUpgradeLevel(state, "unit_tests");
@@ -1306,7 +1315,7 @@ function getBugChanceMultiplier(state, nowMs) {
   return clamp(multiplier, 0.05, 4);
 }
 
-function getBugSeverityMultiplier(state) {
+function getBugSeverityMultiplier(state: GameState): number {
   let multiplier = 1;
   multiplier *= 1 - 0.1 * getUpgradeLevel(state, "static_analysis");
   multiplier *= 1 - 0.08 * getUpgradeLevel(state, "monitoring");
@@ -1335,7 +1344,7 @@ function getBugSeverityMultiplier(state) {
   return clamp(multiplier, 0.25, 2);
 }
 
-function decayBugs(state, elapsedMs) {
+function decayBugs(state: GameState, elapsedMs: number): void {
   const decayLevel =
     getUpgradeLevel(state, "sre_team") +
     getUpgradeLevel(state, "rubber_duck_debugging");
@@ -1353,7 +1362,7 @@ function decayBugs(state, elapsedMs) {
     .filter((bug) => bug.severity > 0.01);
 }
 
-function autoFixMinorBugs(state) {
+function autoFixMinorBugs(state: GameState): void {
   const ciLevel = getUpgradeLevel(state, "ci_pipeline");
   if (ciLevel <= 0 || state.bugs.length === 0) {
     return;
@@ -1363,7 +1372,12 @@ function autoFixMinorBugs(state) {
   state.bugs = state.bugs.filter((bug) => bug.severity > threshold);
 }
 
-function spawnScheduledBugs(state, elapsedMs, nowMs, random) {
+function spawnScheduledBugs(
+  state: GameState,
+  elapsedMs: number,
+  nowMs: number,
+  random: () => number,
+): void {
   const bugPressureUnits = getBugPressureUnits(state, nowMs);
   if (bugPressureUnits === 0) {
     return;
@@ -1378,7 +1392,12 @@ function spawnScheduledBugs(state, elapsedMs, nowMs, random) {
   }
 }
 
-function spawnRandomBugs(state, tickStartMs, nowMs, random) {
+function spawnRandomBugs(
+  state: GameState,
+  tickStartMs: number,
+  nowMs: number,
+  random: () => number,
+): void {
   const bugPressureUnits = getBugPressureUnits(state, nowMs);
   if (bugPressureUnits === 0) {
     return;
@@ -1402,7 +1421,7 @@ function spawnRandomBugs(state, tickStartMs, nowMs, random) {
   }
 }
 
-function integrateBoostRisk(state, fromMs, toMs) {
+function integrateBoostRisk(state: GameState, fromMs: number, toMs: number): number {
   if (toMs <= fromMs) {
     return 0;
   }
@@ -1433,7 +1452,12 @@ function integrateBoostRisk(state, fromMs, toMs) {
   return riskSeconds;
 }
 
-function maybeTriggerRandomEvent(state, elapsedMs, nowMs, random) {
+function maybeTriggerRandomEvent(
+  state: GameState,
+  elapsedMs: number,
+  nowMs: number,
+  random: () => number,
+): void {
   state.eventProgressMs += elapsedMs;
   if (state.eventProgressMs < 15_000) {
     return;
@@ -1564,7 +1588,11 @@ function maybeTriggerRandomEvent(state, elapsedMs, nowMs, random) {
   });
 }
 
-function maybeTriggerStrategicDebt(state, elapsedMs, random) {
+function maybeTriggerStrategicDebt(
+  state: GameState,
+  elapsedMs: number,
+  random: () => number,
+): void {
   if (state.strategicDebt) {
     return;
   }
@@ -1603,7 +1631,7 @@ function maybeTriggerStrategicDebt(state, elapsedMs, random) {
   };
 }
 
-function maybeTriggerGameOver(state, nowMs) {
+function maybeTriggerGameOver(state: GameState, nowMs: number): void {
   if (state.gameOver) {
     return;
   }
@@ -1620,7 +1648,11 @@ function maybeTriggerGameOver(state, nowMs) {
   }
 }
 
-function accrueStructuralTechDebt(state, elapsedMs, nowMs) {
+function accrueStructuralTechDebt(
+  state: GameState,
+  elapsedMs: number,
+  nowMs: number,
+): void {
   const seconds = elapsedMs / 1000;
   const bugFactor = state.bugs.length * 0.11;
   const severityFactor =
@@ -1678,7 +1710,7 @@ function accrueStructuralTechDebt(state, elapsedMs, nowMs) {
   state.techDebtPoints += debtPerSecond * seconds;
 }
 
-function addBug(state, nowMs, random) {
+function addBug(state: GameState, nowMs: number, random: () => number): void {
   let severity =
     BUG_SEVERITY_MIN + random() * (BUG_SEVERITY_MAX - BUG_SEVERITY_MIN);
   severity *= getBugSeverityMultiplier(state);
@@ -1694,24 +1726,24 @@ function addBug(state, nowMs, random) {
   state.nextBugId += 1;
 }
 
-function toNumber(value, fallback) {
+function toNumber(value: unknown, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function clamp(value, min, max) {
+function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function clampInt(value, min, max) {
+function clampInt(value: unknown, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.floor(toNumber(value, 0))));
 }
 
-function roundTo3(value) {
+function roundTo3(value: number): number {
   return Math.round(value * 1000) / 1000;
 }
 
-function getBugPressureUnits(state, nowMs) {
+function getBugPressureUnits(state: GameState, nowMs: number): number {
   const aiAgents = getAiAgentCount(state);
   const humanAndTempDevelopers = Math.max(
     0,
@@ -1720,11 +1752,11 @@ function getBugPressureUnits(state, nowMs) {
   return humanAndTempDevelopers + aiAgents * AI_AGENT_BUG_PRESSURE_WEIGHT;
 }
 
-function getStructuralDebtPenaltyMultiplier(state) {
+function getStructuralDebtPenaltyMultiplier(state: GameState): number {
   return clamp(1 - state.techDebtPoints / 5000, 0.55, 1);
 }
 
-function normalizeBugTitle(value) {
+function normalizeBugTitle(value: unknown): string {
   const title = String(value || "").trim();
   if (title.length > 0) {
     return title;
@@ -1732,7 +1764,7 @@ function normalizeBugTitle(value) {
   return "Unclassified Runtime Glitch";
 }
 
-function pickBugTitle(state, random) {
+function pickBugTitle(state: GameState, random: () => number): string {
   const activeTitles = new Set(
     state.bugs.map((bug) => normalizeBugTitle(bug.title)),
   );

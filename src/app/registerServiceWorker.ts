@@ -1,4 +1,6 @@
-export function registerServiceWorker(windowObject = window) {
+export function registerServiceWorker(
+  windowObject: Window & typeof globalThis = window,
+): void {
   if (!import.meta.env.PROD || !("serviceWorker" in windowObject.navigator)) {
     return;
   }

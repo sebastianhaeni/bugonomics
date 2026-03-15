@@ -1,5 +1,6 @@
 import { UPGRADE_CATALOG } from "../game/constants.js";
 import { getUpgradeLevel } from "../game/engine.js";
+import type { AchievementDefinition, GameState } from "../game/types.js";
 
 const DISABLED_ABILITY_UPGRADE_IDS = new Set([
   "unlock_crunch_time",
@@ -12,7 +13,7 @@ export const ACTIVE_UPGRADE_CATALOG = UPGRADE_CATALOG.filter(
   (upgrade) => !DISABLED_ABILITY_UPGRADE_IDS.has(upgrade.id),
 );
 
-export const COMPANY_STAGES = [
+const COMPANY_STAGES = [
   {
     id: "garage",
     label: "Garage",
@@ -117,7 +118,7 @@ export const COMBO_CALLOUTS = [
   "No Regression Detected",
 ];
 
-export const ACHIEVEMENTS = [
+export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: "first_keystroke",
     title: "Hello, World",
@@ -216,17 +217,23 @@ export const ACHIEVEMENTS = [
   },
 ];
 
-export function getBoughtUpgradeCount(state) {
+export function getBoughtUpgradeCount(state: GameState): number {
   return ACTIVE_UPGRADE_CATALOG.reduce((count, upgrade) => {
     return count + (getUpgradeLevel(state, upgrade.id) > 0 ? 1 : 0);
   }, 0);
 }
 
-export function formatAchievementProgress(currentValue, targetValue) {
+function formatAchievementProgress(
+  currentValue: number,
+  targetValue: number,
+): string {
   return `${Math.floor(currentValue).toLocaleString()}/${Math.floor(targetValue).toLocaleString()}`;
 }
 
-export function getAchievementStatus(achievement, state) {
+export function getAchievementStatus(
+  achievement: (typeof ACHIEVEMENTS)[number],
+  state: GameState,
+) {
   const currentValue = Math.max(0, Number(achievement.value(state)) || 0);
   const progressValue = Math.min(achievement.target, currentValue);
   return {
@@ -237,7 +244,7 @@ export function getAchievementStatus(achievement, state) {
   };
 }
 
-export function getCompanyStagePresentation(lifetimeDollars) {
+export function getCompanyStagePresentation(lifetimeDollars: number) {
   const safeDollars = Math.max(0, Number(lifetimeDollars) || 0);
   let currentIndex = 0;
 

@@ -5,8 +5,18 @@ import {
   tick,
 } from "../game/engine.js";
 import { loadState, saveState } from "../game/persistence.js";
+import type { GameAction, GameState, StorageLike, TickOptions } from "../game/types.js";
 
-export function hasPlayerProgress(state, nowMs = Date.now()) {
+interface GameStoreOptions {
+  storage?: StorageLike;
+  now?: () => number;
+  load?: (storage: StorageLike, nowMs?: number) => GameState;
+  save?: (state: GameState, storage: StorageLike) => void;
+  createState?: (nowMs?: number) => GameState;
+  advanceState?: (state: GameState, options?: TickOptions) => GameState;
+}
+
+export function hasPlayerProgress(state: GameState, nowMs = Date.now()): boolean {
   const baseline = createInitialState(nowMs);
   return (
     state.dollars > baseline.dollars ||
@@ -24,14 +34,14 @@ export function createGameStore({
   save = saveState,
   createState = createInitialState,
   advanceState = tick,
-} = {}) {
-  let state = load(storage, now());
+}: GameStoreOptions = {}) {
+  let state: GameState = load(storage, now());
 
   function getState() {
     return state;
   }
 
-  function dispatch(action, options = {}) {
+  function dispatch(action: GameAction, options: TickOptions = {}): GameState {
     state = advanceState(state, {
       action,
       nowMs: options.nowMs ?? now(),
@@ -40,7 +50,7 @@ export function createGameStore({
     return state;
   }
 
-  function advance(options = {}) {
+  function advance(options: TickOptions = {}): GameState {
     state = advanceState(state, {
       nowMs: options.nowMs ?? now(),
       random: options.random,
@@ -48,12 +58,12 @@ export function createGameStore({
     return state;
   }
 
-  function reset(nowMs = now()) {
+  function reset(nowMs = now()): GameState {
     state = createState(nowMs);
     return state;
   }
 
-  function persist() {
+  function persist(): GameState {
     save(state, storage);
     return state;
   }

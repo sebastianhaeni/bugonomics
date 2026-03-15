@@ -851,10 +851,6 @@ function applyAction(
   }
 
   if (action.type === "BUY_AI_TOKEN") {
-    if (!state.unlocks.aiTokens) {
-      return;
-    }
-
     const tokenCost = Math.ceil(
       AI_TOKEN_LOC_COST * getAiTokenCostMultiplier(state),
     );
@@ -998,9 +994,6 @@ function applyAction(
     }
     if (upgradeId === "unlock_senior_developers") {
       state.unlocks.senior = true;
-    }
-    if (upgradeId === "unlock_ai_tokens") {
-      state.unlocks.aiTokens = true;
     }
     if (upgradeId === "unlock_architect") {
       state.unlocks.architect = true;

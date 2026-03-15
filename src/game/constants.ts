@@ -334,14 +334,6 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
     description: "Boost multiplier increases",
   },
   {
-    id: "faster_gpus",
-    name: "Faster GPUs",
-    category: "AI Token Upgrades",
-    costLoc: 1600,
-    maxLevel: 1,
-    description: "AI agent surges activate faster",
-  },
-  {
     id: "prompt_templates",
     name: "Prompt Templates",
     category: "AI Token Upgrades",
@@ -463,14 +455,6 @@ export const UPGRADE_CATALOG: UpgradeDefinition[] = [
     maxLevel: 1,
     requires: ["unlock_mid_developers"],
     description: "Allows hiring senior developers",
-  },
-  {
-    id: "unlock_ai_tokens",
-    name: "Unlock AI Agents",
-    category: "Meta Productivity Upgrades",
-    costLoc: 700,
-    maxLevel: 1,
-    description: "Allows hiring AI agents",
   },
   {
     id: "unlock_architect",

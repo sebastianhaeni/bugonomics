@@ -226,11 +226,13 @@ body.alarm-tech-debt::after {
 }
 
 .game-over-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 30;
   display: grid;
   place-items: center;
+  padding: 20px 14px;
+  overflow-y: auto;
   background: rgba(5, 7, 15, 0.74);
   backdrop-filter: blur(4px);
 }
@@ -260,6 +262,10 @@ body.alarm-tech-debt::after {
 
 .game-over-card p {
   color: #f6c8d7;
+}
+
+.mobile-nav {
+  display: none;
 }
 
 .dashboard {
@@ -824,7 +830,6 @@ h2 {
         rgba(76, 192, 255, calc(0.12 + var(--focus-intensity, 0.2) * 0.24)),
       0 0 calc(18px + var(--focus-intensity, 0.2) * 20px)
         rgba(76, 192, 255, calc(0.22 + var(--focus-intensity, 0.2) * 0.28));
-    transform: scale(1);
   }
 
   50% {
@@ -839,7 +844,6 @@ h2 {
         rgba(120, 255, 228, calc(0.18 + var(--focus-intensity, 0.2) * 0.3)),
       0 0 calc(30px + var(--focus-intensity, 0.2) * 26px)
         rgba(120, 255, 228, calc(0.26 + var(--focus-intensity, 0.2) * 0.36));
-    transform: scale(1.004);
   }
 }
 
@@ -1364,62 +1368,235 @@ input {
 @media (max-width: 760px) {
   body {
     padding: 8px;
+    overflow: hidden;
+  }
+
+  #app {
+    height: calc(100dvh - 16px);
+  }
+
+  .game-shell {
+    height: 100%;
+    min-height: 0;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
 
   .dashboard {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(6, minmax(0, auto));
+    display: flex;
+    flex-direction: column;
     gap: 6px;
+    height: 100%;
+    overflow: hidden;
   }
 
-  .tile-hero {
-    grid-column: 1 / 3;
-    grid-row: 1;
-  }
-
-  .tile-stats {
-    grid-column: 1 / 2;
-    grid-row: 2;
-  }
-
-  .tile-debt {
-    grid-column: 2 / 3;
-    grid-row: 2;
-  }
-
-  .tile-actions {
-    grid-column: 2 / 3;
-    grid-row: 3;
-  }
-
-  .tile-devs {
-    grid-column: 1 / 2;
-    grid-row: 3;
-  }
-
-  .tile-shop {
-    grid-column: 1 / 2;
-    grid-row: 4;
-  }
-
-  .tile-bugs {
-    grid-column: 2 / 3;
-    grid-row: 4;
-  }
-
-  .tile-owned {
-    grid-column: 1 / 2;
-    grid-row: 5;
-  }
-
-  .tile-utility {
-    grid-column: 2 / 3;
-    grid-row: 5;
-  }
-
+  .tile-hero,
+  .tile-debt,
+  .tile-bugs,
+  .tile-actions,
+  .tile-stats,
+  .tile-devs,
+  .tile-shop,
+  .tile-utility,
+  .tile-owned,
   .tile-events {
-    grid-column: 1 / 3;
-    grid-row: 6;
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+    overflow: auto;
+    display: none;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero,
+  .game-shell[data-mobile-screen="play"] .tile-actions {
+    display: block;
+  }
+
+  .game-shell[data-mobile-screen="ops"] .tile-debt,
+  .game-shell[data-mobile-screen="ops"] .tile-bugs,
+  .game-shell[data-mobile-screen="ops"] .tile-events {
+    display: block;
+  }
+
+  .game-shell[data-mobile-screen="team"] .tile-devs {
+    display: block;
+  }
+
+  .game-shell[data-mobile-screen="shop"] .tile-shop,
+  .game-shell[data-mobile-screen="shop"] .tile-owned {
+    display: block;
+  }
+
+  .game-shell[data-mobile-screen="release"] .tile-utility {
+    display: block;
+  }
+
+  .tile-hero,
+  .tile-actions,
+  .tile-stats,
+  .tile-debt,
+  .tile-bugs,
+  .tile-events,
+  .tile-devs,
+  .tile-shop,
+  .tile-utility,
+  .tile-owned {
+    max-height: 100%;
+  }
+
+  .game-shell[data-mobile-screen="team"] .tile-devs,
+  .game-shell[data-mobile-screen="shop"] .tile-shop,
+  .game-shell[data-mobile-screen="shop"] .tile-owned,
+  .game-shell[data-mobile-screen="release"] .tile-utility {
+    flex: 1 1 auto;
+  }
+
+  .game-shell[data-mobile-screen="ops"] .tile-bugs,
+  .game-shell[data-mobile-screen="ops"] .tile-events,
+  .game-shell[data-mobile-screen="play"] .tile-hero,
+  .game-shell[data-mobile-screen="play"] .tile-actions {
+    flex: 1 1 auto;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero {
+    display: flex;
+    flex: 0 0 clamp(340px, calc(100dvh - 300px), 430px);
+    height: clamp(340px, calc(100dvh - 300px), 430px);
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .subtitle,
+  .game-shell[data-mobile-screen="play"] .tile-hero .combo-bursts {
+    display: none;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero [data-ui="company-note"],
+  .game-shell[data-mobile-screen="play"] .tile-hero .company-progress {
+    display: none;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .company-evolution {
+    margin-bottom: 0;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .company-head {
+    align-items: center;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .click-primary-wrap {
+    margin: 0;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .combo-meter {
+    margin-top: 6px;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-hero .team-visual {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-actions {
+    flex: 0 0 auto;
+    overflow: auto;
+  }
+
+  .game-shell[data-mobile-screen="play"] .tile-actions .risk-readout p {
+    white-space: normal;
+    font-size: 0.68rem;
+  }
+
+  .mobile-nav {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    z-index: 16;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    border: 1px solid rgba(67, 224, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(5, 11, 21, 0.94);
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.46),
+      0 0 18px rgba(67, 224, 255, 0.15);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-nav-btn {
+    position: relative;
+    min-height: 48px;
+    padding: 6px 4px 8px;
+    border-radius: 12px;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+  }
+
+  .mobile-nav-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 3px;
+    color: rgba(126, 183, 198, 0.95);
+  }
+
+  .mobile-nav-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    filter: drop-shadow(0 0 8px rgba(67, 224, 255, 0.18));
+  }
+
+  .mobile-nav-btn.is-active {
+    border-color: rgba(142, 255, 100, 0.8);
+    background: linear-gradient(180deg, rgba(28, 74, 37, 0.92), rgba(14, 43, 21, 0.96));
+    color: #f2ffe8;
+    box-shadow: 0 0 14px rgba(142, 255, 100, 0.2);
+  }
+
+  .mobile-nav-btn.is-active .mobile-nav-icon {
+    color: rgba(142, 255, 100, 0.98);
+  }
+
+  .mobile-nav-label {
+    display: block;
+    text-align: center;
+  }
+
+  .mobile-nav-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    min-width: 19px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 95, 143, 0.96), rgba(255, 144, 116, 0.96));
+    color: #fff7fb;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(255, 95, 143, 0.4);
+  }
+
+  .mobile-nav-badge[data-tone="info"] {
+    background: linear-gradient(180deg, rgba(67, 224, 255, 0.96), rgba(74, 145, 255, 0.96));
+    box-shadow: 0 0 10px rgba(67, 224, 255, 0.35);
+  }
+
+  .mobile-nav-badge[data-tone="success"] {
+    background: linear-gradient(180deg, rgba(142, 255, 100, 0.96), rgba(53, 194, 100, 0.96));
+    color: #08210c;
+    box-shadow: 0 0 10px rgba(142, 255, 100, 0.32);
   }
 
   .panel,
@@ -1461,6 +1638,46 @@ input {
 
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .game-shell[data-mobile-screen="ops"] .tile-debt {
+    display: block;
+  }
+
+  .tile-debt h2,
+  .tile-bugs h2 {
+    margin-bottom: 4px;
+  }
+
+  .tile-debt .risk-readout-prominent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+    align-items: center;
+  }
+
+  .tile-debt .risk-readout-prominent p {
+    margin: 0;
+    font-size: 0.68rem;
+  }
+
+  .tile-debt .debt-bar-prominent {
+    grid-column: 1 / -1;
+    margin: 2px 0;
+  }
+
+  .tile-debt [data-ui="repair-tech-debt-btn"] {
+    grid-column: 1 / -1;
+  }
+
+  .tile-bugs [data-ui="bug-list"] {
+    max-height: none;
+    overflow: auto;
+  }
+
+  .tile-events [data-ui="event-list"] {
+    max-height: none;
+    overflow: auto;
   }
 
   .stats strong {

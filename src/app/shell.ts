@@ -47,6 +47,12 @@ export interface ShellElements {
   gameOverOverlay: HTMLElement;
   gameOverTitle: HTMLElement;
   gameOverMessage: HTMLElement;
+  mobileNav: HTMLElement;
+  mobileNavPlayBadge: HTMLElement;
+  mobileNavOpsBadge: HTMLElement;
+  mobileNavTeamBadge: HTMLElement;
+  mobileNavShopBadge: HTMLElement;
+  mobileNavReleaseBadge: HTMLElement;
   shell: HTMLElement;
 }
 
@@ -217,6 +223,63 @@ export function mountGameShell(
           </section>
         </aside>
       </div>
+      <nav class="mobile-nav" data-ui="mobile-nav" aria-label="Game sections">
+        <button type="button" class="mobile-nav-btn is-active" data-screen-id="play" data-ui="mobile-nav-play">
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 7l5 5-5 5" />
+              <path d="M13 17h7" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">Code</span>
+          <span class="mobile-nav-badge" data-ui="mobile-nav-play-badge" hidden>0</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-screen-id="ops" data-ui="mobile-nav-ops">
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 3l7 3v5c0 5-3.1 8.4-7 10-3.9-1.6-7-5-7-10V6l7-3z" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">Ops</span>
+          <span class="mobile-nav-badge" data-ui="mobile-nav-ops-badge" hidden>0</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-screen-id="team" data-ui="mobile-nav-team">
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M16 11a3 3 0 100-6 3 3 0 000 6z" />
+              <path d="M8 12a4 4 0 100-8 4 4 0 000 8z" />
+              <path d="M2.5 19a5.5 5.5 0 0111 0" />
+              <path d="M13 18a4.5 4.5 0 018.5 1" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">Team</span>
+          <span class="mobile-nav-badge" data-ui="mobile-nav-team-badge" hidden>0</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-screen-id="shop" data-ui="mobile-nav-shop">
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 6h15l-1.5 8.5H7L4 6z" />
+              <path d="M9 6l1-2h4l1 2" />
+              <path d="M9 18a1.25 1.25 0 100 2.5A1.25 1.25 0 009 18z" />
+              <path d="M16 18a1.25 1.25 0 100 2.5A1.25 1.25 0 0016 18z" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">Shop</span>
+          <span class="mobile-nav-badge" data-ui="mobile-nav-shop-badge" hidden>0</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-screen-id="release" data-ui="mobile-nav-release">
+          <span class="mobile-nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 3c4.5 0 7 4.1 7 8.5-3.4 0-5.8.9-8 3.1-1.4 1.4-2.2 3-2.8 5.4L6 18c.8-3.6 1.4-5.2 3-6.8 2.2-2.2 4.6-3.1 10-3.2" />
+              <path d="M9 15l-3 3" />
+              <path d="M13 11l3-3" />
+            </svg>
+          </span>
+          <span class="mobile-nav-label">Release</span>
+          <span class="mobile-nav-badge" data-ui="mobile-nav-release-badge" hidden>0</span>
+        </button>
+      </nav>
     </main>
   `;
 
@@ -272,6 +335,15 @@ export function mountGameShell(
     gameOverOverlay: mustQuery(appRoot, '[data-ui="game-over-overlay"]'),
     gameOverTitle: mustQuery(appRoot, '[data-ui="game-over-title"]'),
     gameOverMessage: mustQuery(appRoot, '[data-ui="game-over-message"]'),
+    mobileNav: mustQuery(appRoot, '[data-ui="mobile-nav"]'),
+    mobileNavPlayBadge: mustQuery(appRoot, '[data-ui="mobile-nav-play-badge"]'),
+    mobileNavOpsBadge: mustQuery(appRoot, '[data-ui="mobile-nav-ops-badge"]'),
+    mobileNavTeamBadge: mustQuery(appRoot, '[data-ui="mobile-nav-team-badge"]'),
+    mobileNavShopBadge: mustQuery(appRoot, '[data-ui="mobile-nav-shop-badge"]'),
+    mobileNavReleaseBadge: mustQuery(
+      appRoot,
+      '[data-ui="mobile-nav-release-badge"]',
+    ),
     shell: mustQuery(appRoot, ".game-shell"),
   };
 

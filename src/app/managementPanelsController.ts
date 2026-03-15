@@ -208,19 +208,7 @@ export function createManagementPanelsController({
       const state = getState();
       const hireRole = hireButton.getAttribute("data-hire-role");
       if (hireRole === "ai") {
-        if (state.unlocks.aiTokens) {
-          applyAction({ type: "BUY_AI_TOKEN" });
-          return;
-        }
-
-        const unlockCost = getUpgradeCost(state, "unlock_ai_tokens");
-        const unlockUpgrade = UPGRADE_BY_ID.get("unlock_ai_tokens");
-        const requirementsMet = (unlockUpgrade?.requires || []).every(
-          (requiredId) => getUpgradeLevel(state, requiredId) > 0,
-        );
-        if (requirementsMet && Number.isFinite(unlockCost)) {
-          applyAction({ type: "BUY_UPGRADE", upgradeId: "unlock_ai_tokens" });
-        }
+        applyAction({ type: "BUY_AI_TOKEN" });
         return;
       }
 
@@ -403,23 +391,8 @@ export function createManagementPanelsController({
 
     const gameOver = isGameOver(state);
     const tokenCost = getAiTokenCost(state);
-    if (state.unlocks.aiTokens) {
-      teamHireRows.ai.button.textContent = `Hire ($${tokenCost})`;
-      teamHireRows.ai.button.disabled = state.dollars < tokenCost || gameOver;
-    } else {
-      const unlockCost = getUpgradeCost(state, "unlock_ai_tokens");
-      const unlockUpgrade = UPGRADE_BY_ID.get("unlock_ai_tokens");
-      const requirementsMet = (unlockUpgrade?.requires || []).every(
-        (requiredId) => getUpgradeLevel(state, requiredId) > 0,
-      );
-      if (requirementsMet && Number.isFinite(unlockCost)) {
-        teamHireRows.ai.button.textContent = `Unlock ($${unlockCost})`;
-        teamHireRows.ai.button.disabled = state.dollars < unlockCost || gameOver;
-      } else {
-        teamHireRows.ai.button.textContent = "Locked";
-        teamHireRows.ai.button.disabled = true;
-      }
-    }
+    teamHireRows.ai.button.textContent = `Hire ($${tokenCost})`;
+    teamHireRows.ai.button.disabled = state.dollars < tokenCost || gameOver;
 
     for (const role of ["product", "ux", "sre"] as SupportRole[]) {
       const cost = getSupportHireCost(state, role);

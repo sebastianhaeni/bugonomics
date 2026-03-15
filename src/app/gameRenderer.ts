@@ -1,16 +1,24 @@
-import { TRADEOFF_MODES } from "../game/constants.js";
+import { PRESTIGE_UPGRADES, TRADEOFF_MODES, UPGRADE_CATALOG } from "../game/constants.js";
 import {
+  getAiTokenCost,
   getBaseLocPerSecond,
   getBugPenaltyMultiplier,
   getBugRiskSummary,
   getClickLocGain,
+  getHireCost,
   getLocDollarConversionRate,
+  getPrestigeUpgradeCost,
+  getPrestigeUpgradeLevel,
+  getSupportHireCost,
   getTechDebtRepairCost,
   getTechDebtStatus,
+  getUpgradeCost,
+  getUpgradeLevel,
   isGameOver,
 } from "../game/engine.js";
 import type { GameAction, GameState, TechDebtStatus } from "../game/types.js";
 import {
+  ACTIVE_UPGRADE_CATALOG,
   getBoughtUpgradeCount,
   getCompanyStagePresentation,
 } from "./progression.js";
@@ -60,6 +68,8 @@ interface GameRendererOptions {
 }
 
 const STRATEGIC_DEBT_AUTO_POSTPONE_MS = 15_000;
+const MOBILE_SCREEN_IDS = ["play", "ops", "team", "shop", "release"] as const;
+type MobileScreenId = (typeof MOBILE_SCREEN_IDS)[number];
 
 export function createGameRenderer({
   buttons,
@@ -79,13 +89,19 @@ export function createGameRenderer({
     debtId: null as string | null,
     startedAtMs: 0,
   };
+  const upgradeById = new Map(
+    UPGRADE_CATALOG.map((upgrade) => [upgrade.id, upgrade]),
+  );
+  let activeMobileScreen: MobileScreenId = "play";
 
   function init(): void {
     initTradeoffSelect();
     initLocVisual();
     initTeamVisual();
+    initMobileNav();
     codeBackground.init();
     managementPanels.init();
+    setMobileScreen("play");
   }
 
   function initTradeoffSelect(): void {
@@ -141,6 +157,34 @@ export function createGameRenderer({
 
       elements.teamVisual.append(row);
     });
+  }
+
+  function initMobileNav(): void {
+    elements.mobileNav.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const button = target.closest<HTMLButtonElement>("button[data-screen-id]");
+      const screenId = button?.getAttribute("data-screen-id") as MobileScreenId | null;
+      if (!screenId || !MOBILE_SCREEN_IDS.includes(screenId)) {
+        return;
+      }
+      setMobileScreen(screenId);
+    });
+  }
+
+  function setMobileScreen(screenId: MobileScreenId): void {
+    activeMobileScreen = screenId;
+    elements.shell.setAttribute("data-mobile-screen", screenId);
+
+    elements.mobileNav
+      .querySelectorAll<HTMLButtonElement>("button[data-screen-id]")
+      .forEach((button) => {
+        const isActive = button.getAttribute("data-screen-id") === screenId;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
   }
 
   function render(state: GameState): void {
@@ -219,10 +263,118 @@ export function createGameRenderer({
     managementPanels.render(state, nowMs);
     renderLocVisual(state);
     renderTeamVisual(state);
+    renderMobileNavBadges(state, debt);
     renderGameOver(state);
     audio.maybePlayGameOverSfx(state);
     manualWrite.renderCombo(nowMs);
     manualWrite.renderFocusTunnel(nowMs);
+  }
+
+  function renderMobileNavBadges(
+    state: GameState,
+    debt: TechDebtStatus,
+  ): void {
+    const buyableUpgradeCount = ACTIVE_UPGRADE_CATALOG.filter((upgrade) => {
+      const level = getUpgradeLevel(state, upgrade.id);
+      if (level > 0) {
+        return false;
+      }
+      const cost = getUpgradeCost(state, upgrade.id);
+      if (!Number.isFinite(cost) || state.dollars < cost) {
+        return false;
+      }
+      return (upgrade.requires || []).every(
+        (requiredId) => getUpgradeLevel(state, requiredId) > 0,
+      );
+    }).length;
+
+    const teamActions =
+      getAffordableHireCount(state) + getUnlockableHireCount(state);
+    const opsCriticalCount =
+      state.bugs.length + (state.strategicDebt ? 1 : 0) + (debt.progress >= 0.75 ? 1 : 0);
+    const opsCount = opsCriticalCount + state.activeEvents.length;
+    const releaseCount =
+      PRESTIGE_UPGRADES.filter((upgrade) => {
+        const cost = getPrestigeUpgradeCost(state, upgrade.id);
+        return Number.isFinite(cost) && state.reputation >= cost;
+      }).length + (elements.prestigeReset.disabled ? 0 : 1);
+
+    setBadge(elements.mobileNavPlayBadge, 0);
+    setBadge(
+      elements.mobileNavOpsBadge,
+      opsCount,
+      opsCriticalCount > 0 ? "danger" : "info",
+    );
+    setBadge(elements.mobileNavTeamBadge, teamActions, "success");
+    setBadge(elements.mobileNavShopBadge, buyableUpgradeCount, "success");
+    setBadge(elements.mobileNavReleaseBadge, releaseCount, "success");
+    elements.shell.setAttribute("data-mobile-screen", activeMobileScreen);
+  }
+
+  function setBadge(
+    element: HTMLElement,
+    count: number,
+    tone: "danger" | "info" | "success" = "danger",
+  ): void {
+    if (count <= 0) {
+      element.hidden = true;
+      element.textContent = "0";
+      element.removeAttribute("data-tone");
+      return;
+    }
+    element.hidden = false;
+    element.setAttribute("data-tone", tone);
+    element.textContent = count > 99 ? "99+" : String(count);
+  }
+
+  function getAffordableHireCount(state: GameState): number {
+    let count = 0;
+    if (state.dollars >= getAiTokenCost(state)) {
+      count += 1;
+    }
+
+    const developerConfigs = [
+      { level: "junior", unlocked: true },
+      { level: "mid", unlocked: state.unlocks.mid },
+      { level: "senior", unlocked: state.unlocks.senior },
+      { level: "architect", unlocked: state.unlocks.architect },
+    ] as const;
+
+    developerConfigs.forEach(({ level, unlocked }) => {
+      if (unlocked && state.dollars >= getHireCost(state, level)) {
+        count += 1;
+      }
+    });
+
+    (["product", "ux", "sre"] as const).forEach((role) => {
+      if (state.dollars >= getSupportHireCost(state, role)) {
+        count += 1;
+      }
+    });
+
+    return count;
+  }
+
+  function getUnlockableHireCount(state: GameState): number {
+    const unlockIds = [
+      "unlock_mid_developers",
+      "unlock_senior_developers",
+      "unlock_architect",
+    ];
+    return unlockIds.filter((upgradeId) => {
+      const upgrade = upgradeById.get(upgradeId);
+      if (!upgrade || getUpgradeLevel(state, upgradeId) > 0) {
+        return false;
+      }
+      const cost = getUpgradeCost(state, upgradeId);
+      return (
+        Number.isFinite(cost) &&
+        state.dollars >= cost &&
+        (upgrade.requires || []).every(
+          (requiredId) => getUpgradeLevel(state, requiredId) > 0,
+        )
+      );
+    }).length;
   }
 
   function renderCompanyEvolution(state: GameState): void {

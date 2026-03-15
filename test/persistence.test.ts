@@ -84,3 +84,34 @@ test("loadState normalizes persisted values", () => {
 test("decodeShareState rejects empty input", () => {
   expect(() => decodeShareState("", 2_000)).toThrow("Share code is empty.");
 });
+
+test("loadState creates a fresh state when storage is empty", () => {
+  const loaded = loadState(createStorage(null), 7_000);
+
+  expect(loaded.lastTickAt).toBe(7_000);
+  expect(loaded.dollars).toBe(35);
+});
+
+test("encode and decode use browser base64 helpers when available", () => {
+  const originalWindow = globalThis.window;
+  const state = createInitialState(1_000);
+  state.totalClicks = 12;
+  const browserWindow = {
+    btoa: (value: string) => Buffer.from(value, "utf-8").toString("base64"),
+    atob: (value: string) => Buffer.from(value, "base64").toString("utf-8"),
+  };
+  Object.defineProperty(globalThis, "window", {
+    value: browserWindow,
+    configurable: true,
+  });
+
+  const encoded = encodeShareState(state);
+  const decoded = decodeShareState(encoded, 2_000);
+
+  expect(decoded.totalClicks).toBe(12);
+
+  Object.defineProperty(globalThis, "window", {
+    value: originalWindow,
+    configurable: true,
+  });
+});

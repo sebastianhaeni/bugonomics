@@ -1,4 +1,4 @@
-interface ShellElements {
+export interface ShellElements {
   dollars: HTMLElement;
   conversion: HTMLElement;
   locps: HTMLElement;
@@ -50,14 +50,14 @@ interface ShellElements {
   shell: HTMLElement;
 }
 
-interface ShellButtons {
+export interface ShellButtons {
   click: HTMLButtonElement;
   strategicRewrite: HTMLButtonElement;
   strategicPostpone: HTMLButtonElement;
   gameOverRestart: HTMLButtonElement;
 }
 
-interface StatCards {
+export interface StatCards {
   dollars: HTMLElement;
   conversion: HTMLElement;
   locps: HTMLElement;

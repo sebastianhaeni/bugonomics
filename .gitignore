@@ -1,0 +1,12 @@
+# os
+.DS_Store
+
+# editor
+.vscode
+.idea
+*.iml
+
+# node
+node_modules
+npm-debug.log*
+*.tsbuildinfo

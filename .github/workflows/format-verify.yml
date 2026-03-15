@@ -1,0 +1,26 @@
+name: Format Verify
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  prettier-check:
+    name: Prettier Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install formatter dependencies
+        run: npm ci
+
+      - name: Verify formatting
+        run: npm run format:check

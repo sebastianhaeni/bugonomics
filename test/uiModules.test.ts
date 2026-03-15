@@ -230,6 +230,7 @@ test("management panels controller initializes panels, renders data, and dispatc
       prestigeUpgradeList: elements.prestigeUpgradeList,
       goalTarget: elements.goalTarget,
       goalProgress: elements.goalProgress,
+      goalProgressFill: elements.goalProgressFill,
       goalReward: elements.goalReward,
       prestigeReset: elements.prestigeReset,
     },

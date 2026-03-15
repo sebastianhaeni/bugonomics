@@ -1436,7 +1436,7 @@ input {
     grid-column: 1;
     grid-row: 1;
     min-height: 0;
-    overflow: auto;
+    overflow: visible;
     display: none;
   }
 
@@ -1479,7 +1479,7 @@ input {
   .tile-shop,
   .tile-utility,
   .tile-owned {
-    max-height: 100%;
+    max-height: none;
   }
 
   .game-shell[data-mobile-screen="team"] .tile-devs,
@@ -1561,12 +1561,19 @@ input {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
+    scrollbar-width: none;
+  }
+
+  .game-shell[data-mobile-screen="play"]
+    .tile-hero
+    .team-visual::-webkit-scrollbar {
+    display: none;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-actions {
     flex: 0 0 auto;
     order: 3;
-    overflow: auto;
+    overflow: visible;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-stats {

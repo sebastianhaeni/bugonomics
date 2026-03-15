@@ -52,7 +52,7 @@ export function createInitialState(nowMs = Date.now()): GameState {
   return {
     loc: 0,
     lifetimeLoc: 0,
-    dollars: 35,
+    dollars: 0,
     lifetimeDollars: 0,
     aiAgents: 0,
     aiTokens: 0,

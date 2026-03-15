@@ -87,7 +87,7 @@ test("loadState creates a fresh state when storage is empty", () => {
   const loaded = loadState(createStorage(null), 7_000);
 
   expect(loaded.lastTickAt).toBe(7_000);
-  expect(loaded.dollars).toBe(35);
+  expect(loaded.dollars).toBe(0);
 });
 
 test("encode and decode use browser base64 helpers when available", () => {

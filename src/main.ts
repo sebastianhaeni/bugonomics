@@ -25,6 +25,7 @@ let state = store.getState();
 const STRATEGIC_DEBT_AUTO_POSTPONE_MS = 15_000;
 const KEYBOARD_WRITE_DEBOUNCE_MS = 180;
 const KEYBOARD_HINT_VISIBLE_MS = 6000;
+const TOUCH_WRITE_SUPPRESS_CLICK_MS = 500;
 
 const app = document.querySelector("#app");
 if (!(app instanceof HTMLElement)) {
@@ -32,6 +33,7 @@ if (!(app instanceof HTMLElement)) {
 }
 const { elements, buttons, statCards } = mountGameShell(app);
 let lastKeyboardWriteAt = 0;
+let lastTouchWriteAt = 0;
 const audio = createAudioController({ isGameOver });
 const codeBackground = createCodeBackgroundController({
   container: elements.codeBackground,
@@ -62,6 +64,7 @@ const managementPanels = createManagementPanelsController({
     prestigeUpgradeList: elements.prestigeUpgradeList,
     goalTarget: elements.goalTarget,
     goalProgress: elements.goalProgress,
+    goalProgressFill: elements.goalProgressFill,
     goalReward: elements.goalReward,
     prestigeReset: elements.prestigeReset,
   },
@@ -98,8 +101,26 @@ function applyAction(action: GameAction): void {
   render();
 }
 
-buttons.click.addEventListener("click", () => {
+const performManualWriteFromUi = (): void => {
   manualWrite.performManualWrite(COMBO_CALLOUTS);
+};
+
+buttons.click.addEventListener("pointerdown", (event) => {
+  if (event.pointerType === "mouse") {
+    return;
+  }
+  if (event.cancelable) {
+    event.preventDefault();
+  }
+  lastTouchWriteAt = Date.now();
+  performManualWriteFromUi();
+});
+
+buttons.click.addEventListener("click", () => {
+  if (Date.now() - lastTouchWriteAt < TOUCH_WRITE_SUPPRESS_CLICK_MS) {
+    return;
+  }
+  performManualWriteFromUi();
 });
 
 window.addEventListener("keydown", (event) => {

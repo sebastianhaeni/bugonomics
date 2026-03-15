@@ -265,7 +265,7 @@ test("click action applies gain, aura creation, and refactoring bug reduction", 
 
   expect(next.totalClicks).toBe(1);
   expect(next.loc).toBeGreaterThan(0);
-  expect(next.dollars).toBeGreaterThan(35);
+  expect(next.dollars).toBeGreaterThan(0);
   expect(next.clickAuras).toHaveLength(1);
   expect(next.bugs).toHaveLength(1);
   expect(next.bugs[0].id).toBe(2);
@@ -361,7 +361,7 @@ test("prestige reset carries prestige state and bootstrap bonuses forward", () =
   expect(next.prestigeUpgrades.momentum_bootstrap).toBe(4);
   expect(next.tradeoffMode).toBe("balanced");
   expect(next.developers.junior).toBe(2);
-  expect(next.dollars).toBeGreaterThan(35);
+  expect(next.dollars).toBeGreaterThan(0);
 });
 
 test("risk summary reflects AI-heavy teams", () => {
@@ -518,7 +518,7 @@ test("tick accrues passive output, cleans expired effects, and respects game ove
 
   const progressed = tick(state, { nowMs: 11_000, random: () => 0.99 });
   expect(progressed.loc).toBeGreaterThan(0);
-  expect(progressed.dollars).toBeGreaterThan(35);
+  expect(progressed.dollars).toBeGreaterThan(0);
   expect(progressed.activeBoosts).toHaveLength(0);
   expect(progressed.clickAuras).toHaveLength(0);
   expect(progressed.activeEvents).toHaveLength(0);

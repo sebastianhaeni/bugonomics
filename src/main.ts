@@ -16,9 +16,11 @@ import { createCodeBackgroundController } from "./app/codeBackgroundController.j
 import { createManualWriteController } from "./app/manualWriteController.js";
 import { createManagementPanelsController } from "./app/managementPanelsController.js";
 import { createGameRenderer } from "./app/gameRenderer.js";
+import { initAnalytics } from "./app/analytics.js";
 import type { GameAction, GameState } from "./game/types.js";
 
 registerServiceWorker();
+initAnalytics(import.meta.env.VITE_GA_MEASUREMENT_ID);
 
 const store = createGameStore({ storage: window.localStorage });
 let state = store.getState();

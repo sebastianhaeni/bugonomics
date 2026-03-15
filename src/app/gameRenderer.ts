@@ -103,6 +103,8 @@ export function createGameRenderer({
     initLocVisual();
     initTeamVisual();
     initMobileNav();
+    syncMobileNavOffset();
+    window.addEventListener("resize", syncMobileNavOffset);
     codeBackground.init();
     managementPanels.init();
     setMobileScreen("play");
@@ -205,6 +207,7 @@ export function createGameRenderer({
   function setMobileScreen(screenId: MobileScreenId): void {
     activeMobileScreen = screenId;
     elements.shell.setAttribute("data-mobile-screen", screenId);
+    syncMobileNavOffset();
 
     elements.mobileNav
       .querySelectorAll<HTMLButtonElement>("button[data-screen-id]")
@@ -213,6 +216,11 @@ export function createGameRenderer({
         button.classList.toggle("is-active", isActive);
         button.setAttribute("aria-pressed", isActive ? "true" : "false");
       });
+  }
+
+  function syncMobileNavOffset(): void {
+    const navHeight = elements.mobileNav.offsetHeight || 76;
+    elements.shell.style.setProperty("--mobile-nav-offset", `${navHeight + 20}px`);
   }
 
   function render(state: GameState): void {

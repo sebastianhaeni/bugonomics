@@ -1542,8 +1542,10 @@ input {
     min-height: 48px;
     padding: 6px 4px 8px;
     border-radius: 12px;
+    overflow: hidden;
     font-size: 0.68rem;
     letter-spacing: 0.04em;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-nav-icon {

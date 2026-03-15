@@ -164,7 +164,7 @@ export function createGameRenderer({
   }
 
   function initMobileNav(): void {
-    elements.mobileNav.addEventListener("click", (event) => {
+    const handleNavInteraction = (event: Event): void => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) {
         return;
@@ -178,8 +178,28 @@ export function createGameRenderer({
       if (!screenId || !MOBILE_SCREEN_IDS.includes(screenId)) {
         return;
       }
+      if (
+        event instanceof PointerEvent &&
+        event.pointerType !== "mouse" &&
+        event.cancelable
+      ) {
+        event.preventDefault();
+      }
       setMobileScreen(screenId);
+    };
+
+    elements.mobileNav.addEventListener("pointerdown", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      if (!target.closest("button[data-screen-id]")) {
+        return;
+      }
+      handleNavInteraction(event);
     });
+
+    elements.mobileNav.addEventListener("click", handleNavInteraction);
   }
 
   function setMobileScreen(screenId: MobileScreenId): void {

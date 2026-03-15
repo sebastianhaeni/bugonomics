@@ -74,7 +74,9 @@ export function createManualWriteController({
 
     const callout = callouts[Math.floor(Math.random() * callouts.length)];
     comboMeter.textContent =
-      comboState.count > 1 ? `Flow x${comboState.count} - ${callout}` : "Flow x1";
+      comboState.count > 1
+        ? `Flow x${comboState.count} - ${callout}`
+        : "Flow x1";
     comboMeter.classList.toggle("is-hot", comboState.count >= 6);
 
     if (

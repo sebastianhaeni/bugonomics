@@ -1559,7 +1559,11 @@ input {
 
   .mobile-nav-btn.is-active {
     border-color: rgba(142, 255, 100, 0.8);
-    background: linear-gradient(180deg, rgba(28, 74, 37, 0.92), rgba(14, 43, 21, 0.96));
+    background: linear-gradient(
+      180deg,
+      rgba(28, 74, 37, 0.92),
+      rgba(14, 43, 21, 0.96)
+    );
     color: #f2ffe8;
     box-shadow: 0 0 14px rgba(142, 255, 100, 0.2);
   }
@@ -1580,7 +1584,11 @@ input {
     min-width: 19px;
     padding: 1px 5px;
     border-radius: 999px;
-    background: linear-gradient(180deg, rgba(255, 95, 143, 0.96), rgba(255, 144, 116, 0.96));
+    background: linear-gradient(
+      180deg,
+      rgba(255, 95, 143, 0.96),
+      rgba(255, 144, 116, 0.96)
+    );
     color: #fff7fb;
     font-size: 0.62rem;
     font-weight: 700;
@@ -1589,12 +1597,20 @@ input {
   }
 
   .mobile-nav-badge[data-tone="info"] {
-    background: linear-gradient(180deg, rgba(67, 224, 255, 0.96), rgba(74, 145, 255, 0.96));
+    background: linear-gradient(
+      180deg,
+      rgba(67, 224, 255, 0.96),
+      rgba(74, 145, 255, 0.96)
+    );
     box-shadow: 0 0 10px rgba(67, 224, 255, 0.35);
   }
 
   .mobile-nav-badge[data-tone="success"] {
-    background: linear-gradient(180deg, rgba(142, 255, 100, 0.96), rgba(53, 194, 100, 0.96));
+    background: linear-gradient(
+      180deg,
+      rgba(142, 255, 100, 0.96),
+      rgba(53, 194, 100, 0.96)
+    );
     color: #08210c;
     box-shadow: 0 0 10px rgba(142, 255, 100, 0.32);
   }

@@ -1,9 +1,7 @@
 import { expect, test } from "vitest";
 
 import { createInitialState } from "../src/game/engine.js";
-import {
-  STORAGE_KEY,
-} from "../src/game/constants.js";
+import { STORAGE_KEY } from "../src/game/constants.js";
 import {
   decodeShareState,
   encodeShareState,

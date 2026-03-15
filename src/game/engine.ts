@@ -404,7 +404,10 @@ export function getDeveloperCount(state: GameState): number {
   );
 }
 
-export function getVisibleDeveloperCount(state: GameState, nowMs = Date.now()): number {
+export function getVisibleDeveloperCount(
+  state: GameState,
+  nowMs = Date.now(),
+): number {
   const total = getDeveloperCount(state);
   const lost = getLostDeveloperCountFromEvents(state, nowMs);
   return (
@@ -414,7 +417,10 @@ export function getVisibleDeveloperCount(state: GameState, nowMs = Date.now()): 
   );
 }
 
-export function getBaseLocPerSecond(state: GameState, nowMs = Date.now()): number {
+export function getBaseLocPerSecond(
+  state: GameState,
+  nowMs = Date.now(),
+): number {
   const visibleDevs = getVisibleDeveloperCount(state, nowMs);
   if (visibleDevs <= 0) {
     return getFlatLocPerSecondBonus(state);
@@ -629,7 +635,10 @@ export function getAiTokenCost(state: GameState): number {
   return Math.ceil(AI_TOKEN_LOC_COST * getAiTokenCostMultiplier(state));
 }
 
-export function getSupportHireCost(state: GameState, role: SupportRole): number {
+export function getSupportHireCost(
+  state: GameState,
+  role: SupportRole,
+): number {
   if (!PRODUCT_TEAM_ROLES[role]) {
     return Infinity;
   }
@@ -641,7 +650,10 @@ export function getSupportHireCost(state: GameState, role: SupportRole): number 
   );
 }
 
-export function getPrestigeUpgradeCost(state: GameState, upgradeId: string): number {
+export function getPrestigeUpgradeCost(
+  state: GameState,
+  upgradeId: string,
+): number {
   const upgrade = PRESTIGE_UPGRADE_BY_ID.get(upgradeId);
   if (!upgrade) {
     return Infinity;
@@ -667,18 +679,25 @@ export function getPrestigeGain(state: GameState): number {
   return Math.max(1, Math.floor(gain));
 }
 
-export function getReleaseVersion(state: Partial<GameState> | null | undefined): number {
+export function getReleaseVersion(
+  state: Partial<GameState> | null | undefined,
+): number {
   return Math.max(1, Math.floor(toNumber(state?.totalPrestiges, 0)) + 1);
 }
 
-export function getPrestigeLocThreshold(state: Partial<GameState> | null | undefined): number {
+export function getPrestigeLocThreshold(
+  state: Partial<GameState> | null | undefined,
+): number {
   const releaseVersion = getReleaseVersion(state);
   const threshold =
     PRESTIGE_LOC_THRESHOLD * Math.pow(PRESTIGE_LOC_SCALING, releaseVersion - 1);
   return Math.max(PRESTIGE_LOC_THRESHOLD, Math.floor(threshold));
 }
 
-export function getBugRiskSummary(state: GameState, nowMs = Date.now()): BugRiskSummary {
+export function getBugRiskSummary(
+  state: GameState,
+  nowMs = Date.now(),
+): BugRiskSummary {
   const bugChanceMultiplier = getBugChanceMultiplier(state, nowMs);
   const activeBoostCount = state.activeBoosts.filter(
     (boost) => boost.expiresAt > nowMs,
@@ -707,11 +726,16 @@ export function getBugRiskSummary(state: GameState, nowMs = Date.now()): BugRisk
   };
 }
 
-export function isGameOver(state: Partial<GameState> | null | undefined): boolean {
+export function isGameOver(
+  state: Partial<GameState> | null | undefined,
+): boolean {
   return Boolean(state?.gameOver);
 }
 
-export function getTechDebtStatus(state: GameState, nowMs = Date.now()): TechDebtStatus {
+export function getTechDebtStatus(
+  state: GameState,
+  nowMs = Date.now(),
+): TechDebtStatus {
   const bugCount = state.bugs.length;
   const totalSeverity = state.bugs.reduce((sum, bug) => sum + bug.severity, 0);
   const bugPenalty = getBugPenaltyMultiplier(state);
@@ -1223,7 +1247,10 @@ function getEventProductionMultiplier(state: GameState, nowMs: number): number {
   }, 1);
 }
 
-function getLostDeveloperCountFromEvents(state: GameState, nowMs: number): number {
+function getLostDeveloperCountFromEvents(
+  state: GameState,
+  nowMs: number,
+): number {
   return state.activeEvents.reduce((lost, event) => {
     if (event.expiresAt > nowMs && event.lostDevCount > 0) {
       return lost + event.lostDevCount;
@@ -1232,7 +1259,10 @@ function getLostDeveloperCountFromEvents(state: GameState, nowMs: number): numbe
   }, 0);
 }
 
-function getHackathonTemporaryDevelopers(state: GameState, nowMs: number): number {
+function getHackathonTemporaryDevelopers(
+  state: GameState,
+  nowMs: number,
+): number {
   return state.activeEvents.reduce((sum, event) => {
     if (event.id === "hackathon" && event.expiresAt > nowMs) {
       return sum + 3;
@@ -1241,7 +1271,10 @@ function getHackathonTemporaryDevelopers(state: GameState, nowMs: number): numbe
   }, 0);
 }
 
-function getHackathonTemporaryLocPerSecond(state: GameState, nowMs: number): number {
+function getHackathonTemporaryLocPerSecond(
+  state: GameState,
+  nowMs: number,
+): number {
   if (getHackathonTemporaryDevelopers(state, nowMs) <= 0) {
     return 0;
   }
@@ -1414,7 +1447,11 @@ function spawnRandomBugs(
   }
 }
 
-function integrateBoostRisk(state: GameState, fromMs: number, toMs: number): number {
+function integrateBoostRisk(
+  state: GameState,
+  fromMs: number,
+  toMs: number,
+): number {
   if (toMs <= fromMs) {
     return 0;
   }

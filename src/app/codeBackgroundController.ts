@@ -41,10 +41,9 @@ export function createCodeBackgroundController({
 
     return {
       node: line,
-      text:
-        CODE_BACKGROUND_SNIPPETS[
-          Math.floor(Math.random() * CODE_BACKGROUND_SNIPPETS.length)
-        ],
+      text: CODE_BACKGROUND_SNIPPETS[
+        Math.floor(Math.random() * CODE_BACKGROUND_SNIPPETS.length)
+      ],
       cursor: 0,
     };
   }

@@ -83,9 +83,11 @@ function mustQuery<T extends Element>(root: ParentNode, selector: string): T {
   return node;
 }
 
-export function mountGameShell(
-  appRoot: Element,
-): { elements: ShellElements; buttons: ShellButtons; statCards: StatCards } {
+export function mountGameShell(appRoot: Element): {
+  elements: ShellElements;
+  buttons: ShellButtons;
+  statCards: StatCards;
+} {
   appRoot.innerHTML = `
     <main class="game-shell">
       <section class="game-over-overlay" data-ui="game-over-overlay" hidden>
@@ -312,7 +314,10 @@ export function mountGameShell(
     goalProgress: mustQuery(appRoot, '[data-ui="release-goal-progress"]'),
     goalTarget: mustQuery(appRoot, '[data-ui="release-goal-target"]'),
     goalReward: mustQuery(appRoot, '[data-ui="release-goal-reward"]'),
-    prestigeUpgradeList: mustQuery(appRoot, '[data-ui="prestige-upgrade-list"]'),
+    prestigeUpgradeList: mustQuery(
+      appRoot,
+      '[data-ui="prestige-upgrade-list"]',
+    ),
     tradeoffModes: mustQuery(appRoot, '[data-ui="tradeoff-select"]'),
     devBugRisk: mustQuery(appRoot, '[data-ui="dev-bug-risk"]'),
     aiBugRisk: mustQuery(appRoot, '[data-ui="ai-bug-risk"]'),

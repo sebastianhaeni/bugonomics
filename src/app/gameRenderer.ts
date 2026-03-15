@@ -1,4 +1,8 @@
-import { PRESTIGE_UPGRADES, TRADEOFF_MODES, UPGRADE_CATALOG } from "../game/constants.js";
+import {
+  PRESTIGE_UPGRADES,
+  TRADEOFF_MODES,
+  UPGRADE_CATALOG,
+} from "../game/constants.js";
 import {
   getAiTokenCost,
   getBaseLocPerSecond,
@@ -165,8 +169,12 @@ export function createGameRenderer({
       if (!(target instanceof HTMLElement)) {
         return;
       }
-      const button = target.closest<HTMLButtonElement>("button[data-screen-id]");
-      const screenId = button?.getAttribute("data-screen-id") as MobileScreenId | null;
+      const button = target.closest<HTMLButtonElement>(
+        "button[data-screen-id]",
+      );
+      const screenId = button?.getAttribute(
+        "data-screen-id",
+      ) as MobileScreenId | null;
       if (!screenId || !MOBILE_SCREEN_IDS.includes(screenId)) {
         return;
       }
@@ -241,7 +249,9 @@ export function createGameRenderer({
     const repairCost = getTechDebtRepairCost(state);
     elements.repairTechDebt.textContent = `Refactor Debt ($${repairCost})`;
     elements.repairTechDebt.disabled =
-      state.dollars < repairCost || isGameOver(state) || debt.techDebtPoints <= 0;
+      state.dollars < repairCost ||
+      isGameOver(state) ||
+      debt.techDebtPoints <= 0;
     document.body.classList.toggle(
       "alarm-tech-debt",
       debt.progress >= 0.85 && !isGameOver(state),
@@ -270,10 +280,7 @@ export function createGameRenderer({
     manualWrite.renderFocusTunnel(nowMs);
   }
 
-  function renderMobileNavBadges(
-    state: GameState,
-    debt: TechDebtStatus,
-  ): void {
+  function renderMobileNavBadges(state: GameState, debt: TechDebtStatus): void {
     const buyableUpgradeCount = ACTIVE_UPGRADE_CATALOG.filter((upgrade) => {
       const level = getUpgradeLevel(state, upgrade.id);
       if (level > 0) {
@@ -291,7 +298,9 @@ export function createGameRenderer({
     const teamActions =
       getAffordableHireCount(state) + getUnlockableHireCount(state);
     const opsCriticalCount =
-      state.bugs.length + (state.strategicDebt ? 1 : 0) + (debt.progress >= 0.75 ? 1 : 0);
+      state.bugs.length +
+      (state.strategicDebt ? 1 : 0) +
+      (debt.progress >= 0.75 ? 1 : 0);
     const opsCount = opsCriticalCount + state.activeEvents.length;
     const releaseCount =
       PRESTIGE_UPGRADES.filter((upgrade) => {

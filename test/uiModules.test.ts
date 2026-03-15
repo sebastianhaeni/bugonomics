@@ -36,7 +36,10 @@ function mount() {
   return mountGameShell(app);
 }
 
-function createState(overrides: Partial<GameState> = {}, nowMs = 10_000): GameState {
+function createState(
+  overrides: Partial<GameState> = {},
+  nowMs = 10_000,
+): GameState {
   return normalizeState(
     {
       ...createInitialState(nowMs),
@@ -250,18 +253,32 @@ test("management panels controller initializes panels, renders data, and dispatc
   expect(elements.eventList.textContent).toContain("Sale");
   expect(elements.upgradeOwned.textContent).toContain("Better Keyboard");
 
-  requiredChild<HTMLButtonElement>(elements.developers, '[data-ui="hire-junior-btn"]').click();
-  requiredChild<HTMLButtonElement>(elements.developers, '[data-ui="buy-token-btn"]').click();
-  requiredChild<HTMLButtonElement>(elements.developers, '[data-ui="hire-product-btn"]').click();
-  requiredChild<HTMLButtonElement>(elements.bugList, '[data-ui="fix-bug-1"]').click();
+  requiredChild<HTMLButtonElement>(
+    elements.developers,
+    '[data-ui="hire-junior-btn"]',
+  ).click();
+  requiredChild<HTMLButtonElement>(
+    elements.developers,
+    '[data-ui="buy-token-btn"]',
+  ).click();
+  requiredChild<HTMLButtonElement>(
+    elements.developers,
+    '[data-ui="hire-product-btn"]',
+  ).click();
+  requiredChild<HTMLButtonElement>(
+    elements.bugList,
+    '[data-ui="fix-bug-1"]',
+  ).click();
 
-  const shopUpgradeButton = elements.upgradeShop.querySelector<HTMLButtonElement>(
-    "button[data-upgrade-id]",
-  );
+  const shopUpgradeButton =
+    elements.upgradeShop.querySelector<HTMLButtonElement>(
+      "button[data-upgrade-id]",
+    );
   shopUpgradeButton?.click();
-  const prestigeButton = elements.prestigeUpgradeList.querySelector<HTMLButtonElement>(
-    "button[data-prestige-upgrade-id]",
-  );
+  const prestigeButton =
+    elements.prestigeUpgradeList.querySelector<HTMLButtonElement>(
+      "button[data-prestige-upgrade-id]",
+    );
   prestigeButton?.click();
 
   expect(actions).toContainEqual({ type: "HIRE", level: "junior" });

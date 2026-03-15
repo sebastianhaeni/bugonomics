@@ -15,8 +15,19 @@ import {
   getUpgradeLevel,
   isGameOver,
 } from "../game/engine.js";
-import { ACHIEVEMENTS, ACTIVE_UPGRADE_CATALOG, getAchievementStatus } from "./progression.js";
-import type { ActiveEvent, Bug, DeveloperLevel, GameAction, GameState, SupportRole } from "../game/types.js";
+import {
+  ACHIEVEMENTS,
+  ACTIVE_UPGRADE_CATALOG,
+  getAchievementStatus,
+} from "./progression.js";
+import type {
+  ActiveEvent,
+  Bug,
+  DeveloperLevel,
+  GameAction,
+  GameState,
+  SupportRole,
+} from "../game/types.js";
 import { createPlaceholder } from "./domHelpers.js";
 
 interface ButtonRow {
@@ -151,14 +162,17 @@ export function createManagementPanelsController({
         <button data-hire-role="ai" data-ui="buy-token-btn">Hire</button>
       </div>
     `;
-    teamHireRows.ai = { button: requiredChild(aiRow, '[data-ui="buy-token-btn"]') };
+    teamHireRows.ai = {
+      button: requiredChild(aiRow, '[data-ui="buy-token-btn"]'),
+    };
     elements.developers.append(aiRow);
 
     for (const level of DEVELOPER_LEVEL_KEYS) {
       const config = DEVELOPER_LEVELS[level];
       const wrapper = document.createElement("div");
       wrapper.className = "developer-row";
-      const architectNote = level === "architect" ? "<br/>Reduces bug chance" : "";
+      const architectNote =
+        level === "architect" ? "<br/>Reduces bug chance" : "";
       wrapper.innerHTML = `
         <div>
           <strong>${config.label}</strong>
@@ -212,13 +226,21 @@ export function createManagementPanelsController({
         return;
       }
 
-      const supportRole = hireButton.getAttribute("data-support-role") as SupportRole | null;
-      if (supportRole === "product" || supportRole === "ux" || supportRole === "sre") {
+      const supportRole = hireButton.getAttribute(
+        "data-support-role",
+      ) as SupportRole | null;
+      if (
+        supportRole === "product" ||
+        supportRole === "ux" ||
+        supportRole === "sre"
+      ) {
         applyAction({ type: "HIRE_SUPPORT", role: supportRole });
         return;
       }
 
-      const level = hireButton.getAttribute("data-level") as DeveloperLevel | null;
+      const level = hireButton.getAttribute(
+        "data-level",
+      ) as DeveloperLevel | null;
       if (!level || !DEVELOPER_LEVELS[level]) {
         return;
       }
@@ -454,9 +476,12 @@ export function createManagementPanelsController({
 
         ownedEntries.push({
           item: row.item,
-          isBuyable: !upgradeState.isMaxed && state.dollars >= upgradeState.cost,
+          isBuyable:
+            !upgradeState.isMaxed && state.dollars >= upgradeState.cost,
           isUpgradable: !upgradeState.isMaxed,
-          cost: Number.isFinite(upgradeState.cost) ? upgradeState.cost : Infinity,
+          cost: Number.isFinite(upgradeState.cost)
+            ? upgradeState.cost
+            : Infinity,
         });
         return;
       }
@@ -620,7 +645,8 @@ export function createManagementPanelsController({
     });
 
     if (activeEvents.length === 0) {
-      if (!emptyEventItem.isConnected) elements.eventList.append(emptyEventItem);
+      if (!emptyEventItem.isConnected)
+        elements.eventList.append(emptyEventItem);
     } else if (emptyEventItem.isConnected) {
       emptyEventItem.remove();
     }
@@ -630,7 +656,10 @@ export function createManagementPanelsController({
     const releaseVersion = getReleaseVersion(state);
     const releaseLocTarget = getPrestigeLocThreshold(state);
     const gain = getPrestigeGain(state);
-    const goalProgress = Math.max(0, Math.min(1, state.lifetimeLoc / releaseLocTarget));
+    const goalProgress = Math.max(
+      0,
+      Math.min(1, state.lifetimeLoc / releaseLocTarget),
+    );
 
     elements.goalTarget.textContent = `Release Version ${releaseVersion}.0 at ${releaseLocTarget.toLocaleString()} lifetime LOC.`;
     elements.prestigeReset.textContent =

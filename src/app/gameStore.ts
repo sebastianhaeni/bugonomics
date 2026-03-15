@@ -5,7 +5,12 @@ import {
   tick,
 } from "../game/engine.js";
 import { loadState, saveState } from "../game/persistence.js";
-import type { GameAction, GameState, StorageLike, TickOptions } from "../game/types.js";
+import type {
+  GameAction,
+  GameState,
+  StorageLike,
+  TickOptions,
+} from "../game/types.js";
 
 interface GameStoreOptions {
   storage?: StorageLike;
@@ -16,7 +21,10 @@ interface GameStoreOptions {
   advanceState?: (state: GameState, options?: TickOptions) => GameState;
 }
 
-export function hasPlayerProgress(state: GameState, nowMs = Date.now()): boolean {
+export function hasPlayerProgress(
+  state: GameState,
+  nowMs = Date.now(),
+): boolean {
   const baseline = createInitialState(nowMs);
   return (
     state.dollars > baseline.dollars ||

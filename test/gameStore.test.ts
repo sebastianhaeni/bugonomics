@@ -91,7 +91,10 @@ test("advance and reset use injected clock and state hooks", () => {
 
 test("dispatch passes through action, explicit nowMs, and random", () => {
   const storage = createStorage();
-  const actions: Array<{ action: GameAction | null | undefined; options?: TickOptions }> = [];
+  const actions: Array<{
+    action: GameAction | null | undefined;
+    options?: TickOptions;
+  }> = [];
   const store = createGameStore({
     storage,
     load: () => createInitialState(100),
@@ -102,7 +105,10 @@ test("dispatch passes through action, explicit nowMs, and random", () => {
   });
   const random = () => 0.25;
 
-  store.dispatch({ type: "CLICK", bonusMultiplier: 1.1 }, { nowMs: 9_000, random });
+  store.dispatch(
+    { type: "CLICK", bonusMultiplier: 1.1 },
+    { nowMs: 9_000, random },
+  );
 
   expect(actions).toHaveLength(1);
   expect(actions[0].action).toEqual({ type: "CLICK", bonusMultiplier: 1.1 });

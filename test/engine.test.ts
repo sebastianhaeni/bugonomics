@@ -195,9 +195,12 @@ test("upgrade costs scale, discount, and max out", () => {
     getUpgradeCost(baseline, "code_snippets"),
   );
   expect(getUpgradeCost(discounted, "does_not_exist")).toBe(Infinity);
-  expect(getUpgradeCost(createState({ upgrades: { better_keyboard: 1 } }), "better_keyboard")).toBe(
-    Infinity,
-  );
+  expect(
+    getUpgradeCost(
+      createState({ upgrades: { better_keyboard: 1 } }),
+      "better_keyboard",
+    ),
+  ).toBe(Infinity);
 });
 
 test("prestige thresholds and gains scale with progress and upgrades", () => {
@@ -320,7 +323,9 @@ test("ability use enforces unlocks and applies ability effects", () => {
   expect(bashed.bugs).toHaveLength(0);
   expect(bashed.abilityCooldowns.bug_bash).toBeGreaterThan(unlocked.lastTickAt);
   expect(
-    crunched.activeBoosts.some((boost) => boost.source === "ability-crunch-time"),
+    crunched.activeBoosts.some(
+      (boost) => boost.source === "ability-crunch-time",
+    ),
   ).toBe(true);
 });
 
@@ -436,16 +441,20 @@ test("support, token, debt, and strategic debt actions update state", () => {
 
   expect(hiredSupport.supportTeam.product).toBe(1);
   expect(boughtToken.aiAgents).toBe(3);
-  expect(activatedToken.activeBoosts.some((boost) => boost.source === "ai-agent-surge")).toBe(
-    true,
-  );
+  expect(
+    activatedToken.activeBoosts.some(
+      (boost) => boost.source === "ai-agent-surge",
+    ),
+  ).toBe(true);
   expect(fixedBug.bugs.length).toBeLessThan(2);
   expect(fixedBug.totalBugsFixed).toBeGreaterThan(0);
   expect(paidDebt.techDebtPoints).toBeLessThan(state.techDebtPoints);
   expect(resolvedDebt.strategicDebt).toBeNull();
-  expect(postponedDebt.activeEvents.some((event) => event.name.includes("Strategic Debt"))).toBe(
-    true,
-  );
+  expect(
+    postponedDebt.activeEvents.some((event) =>
+      event.name.includes("Strategic Debt"),
+    ),
+  ).toBe(true);
 });
 
 test("upgrade, prestige upgrade, and tradeoff actions honor valid inputs", () => {

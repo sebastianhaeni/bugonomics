@@ -34,7 +34,10 @@ export function encodeShareState(state: GameState): string {
   return Buffer.from(encodeURIComponent(json), "utf-8").toString("base64");
 }
 
-export function decodeShareState(encoded: string, nowMs = Date.now()): GameState {
+export function decodeShareState(
+  encoded: string,
+  nowMs = Date.now(),
+): GameState {
   if (!encoded || typeof encoded !== "string") {
     throw new Error("Share code is empty.");
   }

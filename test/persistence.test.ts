@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import { createInitialState } from "../src/game/engine.js";
-import { STORAGE_KEY } from "../src/game/constants.js";
+import { STORAGE_BACKUP_KEY, STORAGE_KEY } from "../src/game/constants.js";
 import {
   decodeShareState,
   encodeShareState,
@@ -9,14 +9,18 @@ import {
   saveState,
 } from "../src/game/persistence.js";
 
-function createStorage(seedValue: string | null = null) {
-  let currentValue = seedValue;
+function createStorage(seedValue: string | null = null, backupValue: string | null = null) {
+  const values = new Map<string, string | null>([
+    [STORAGE_KEY, seedValue],
+    [STORAGE_BACKUP_KEY, backupValue],
+  ]);
+
   return {
-    getItem() {
-      return currentValue;
+    getItem(key: string) {
+      return values.get(key) ?? null;
     },
-    setItem(_key: string, value: string) {
-      currentValue = value;
+    setItem(key: string, value: string) {
+      values.set(key, value);
     },
   };
 }
@@ -43,15 +47,13 @@ test("loadState falls back to a fresh state on bad JSON", () => {
 });
 
 test("saveState writes JSON to storage under the storage key", () => {
-  let writtenKey = "";
-  let writtenValue = "";
+  const written = new Map<string, string>();
   const storage = {
     getItem() {
       return null;
     },
     setItem(key: string, value: string) {
-      writtenKey = key;
-      writtenValue = value;
+      written.set(key, value);
     },
   };
   const state = createInitialState(1_500);
@@ -59,8 +61,8 @@ test("saveState writes JSON to storage under the storage key", () => {
 
   saveState(state, storage);
 
-  expect(writtenKey).toBe(STORAGE_KEY);
-  expect(JSON.parse(writtenValue).totalClicks).toBe(4);
+  expect(JSON.parse(written.get(STORAGE_KEY) ?? "").totalClicks).toBe(4);
+  expect(JSON.parse(written.get(STORAGE_BACKUP_KEY) ?? "").totalClicks).toBe(4);
 });
 
 test("loadState normalizes persisted values", () => {
@@ -88,6 +90,36 @@ test("loadState creates a fresh state when storage is empty", () => {
 
   expect(loaded.lastTickAt).toBe(7_000);
   expect(loaded.dollars).toBe(0);
+});
+
+test("loadState falls back to backup snapshot when primary is corrupted", () => {
+  const backup = JSON.stringify({
+    totalClicks: 23,
+    lastTickAt: 8_000,
+    dollars: 12,
+  });
+
+  const loaded = loadState(createStorage("{bad-json", backup), 9_000);
+
+  expect(loaded.totalClicks).toBe(23);
+  expect(loaded.dollars).toBe(12);
+  expect(loaded.lastTickAt).toBe(8_000);
+});
+
+test("loadState prefers the newest valid snapshot", () => {
+  const primary = JSON.stringify({
+    totalClicks: 11,
+    lastTickAt: 5_000,
+  });
+  const backup = JSON.stringify({
+    totalClicks: 17,
+    lastTickAt: 8_000,
+  });
+
+  const loaded = loadState(createStorage(primary, backup), 9_000);
+
+  expect(loaded.totalClicks).toBe(17);
+  expect(loaded.lastTickAt).toBe(8_000);
 });
 
 test("encode and decode use browser base64 helpers when available", () => {

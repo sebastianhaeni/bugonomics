@@ -1,4 +1,4 @@
-import { STORAGE_KEY } from "./constants.js";
+import { STORAGE_BACKUP_KEY, STORAGE_KEY } from "./constants.js";
 import type { GameState, StorageLike } from "./types.js";
 import { createInitialState, normalizeState } from "./engine.js";
 
@@ -6,22 +6,43 @@ export function saveState(
   state: GameState,
   storage: StorageLike = window.localStorage,
 ): void {
-  storage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const serialized = JSON.stringify(state);
+  storage.setItem(STORAGE_KEY, serialized);
+  storage.setItem(STORAGE_BACKUP_KEY, serialized);
 }
 
 export function loadState(
   storage: StorageLike = window.localStorage,
   nowMs = Date.now(),
 ): GameState {
-  const raw = storage.getItem(STORAGE_KEY);
-  if (!raw) {
+  const candidates = [
+    readStoredState(storage, STORAGE_KEY, nowMs),
+    readStoredState(storage, STORAGE_BACKUP_KEY, nowMs),
+  ].filter((value): value is GameState => value !== null);
+
+  if (candidates.length === 0) {
     return createInitialState(nowMs);
+  }
+
+  return candidates.reduce((latest, candidate) =>
+    candidate.lastTickAt > latest.lastTickAt ? candidate : latest,
+  );
+}
+
+function readStoredState(
+  storage: StorageLike,
+  key: string,
+  nowMs: number,
+): GameState | null {
+  const raw = storage.getItem(key);
+  if (!raw) {
+    return null;
   }
 
   try {
     return normalizeState(JSON.parse(raw), nowMs);
   } catch {
-    return createInitialState(nowMs);
+    return null;
   }
 }
 

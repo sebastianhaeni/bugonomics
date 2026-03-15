@@ -1489,6 +1489,34 @@ input {
     flex: 1 1 auto;
   }
 
+  .game-shell[data-mobile-screen="shop"] .tile-shop,
+  .game-shell[data-mobile-screen="shop"] .tile-owned {
+    flex: 0 0 auto;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .game-shell[data-mobile-screen="shop"] .tile-shop {
+    order: 1;
+  }
+
+  .game-shell[data-mobile-screen="shop"] .tile-owned {
+    order: 2;
+  }
+
+  .game-shell[data-mobile-screen="release"] .tile-utility {
+    flex: 0 0 auto;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .game-shell[data-mobile-screen="release"] [data-ui="prestige-upgrade-list"],
+  .game-shell[data-mobile-screen="release"] [data-ui="achievement-list"] {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
   .game-shell[data-mobile-screen="ops"] .tile-bugs,
   .game-shell[data-mobile-screen="ops"] .tile-events,
   .game-shell[data-mobile-screen="play"] .tile-hero,
@@ -1503,7 +1531,7 @@ input {
     height: clamp(220px, calc(100svh - 430px), 284px);
     flex-direction: column;
     justify-content: space-between;
-    gap: 6px;
+    gap: 4px;
     overflow: hidden;
   }
 
@@ -1527,7 +1555,7 @@ input {
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .company-progress {
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .click-primary-wrap {
@@ -1535,7 +1563,7 @@ input {
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .loc-visual-wrap {
-    margin-top: 2px;
+    margin-top: 0;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .loc-visual {
@@ -1554,7 +1582,7 @@ input {
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .combo-meter {
-    margin-top: 2px;
+    margin-top: 0;
   }
 
   .game-shell[data-mobile-screen="play"] .tile-hero .team-visual {

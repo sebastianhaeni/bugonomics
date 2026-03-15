@@ -11,7 +11,7 @@ import type {
   UpgradeDefinition,
 } from "./types.js";
 
-export const STORAGE_KEY = "skills17.frontend.loc-clicker.state.v1";
+export const STORAGE_KEY = "loc-clicker.state.v1";
 export const STORAGE_BACKUP_KEY = `${STORAGE_KEY}.backup`;
 
 export const DEVELOPER_LEVELS: Record<DeveloperLevel, DeveloperConfig> = {

@@ -9,7 +9,10 @@ import {
   saveState,
 } from "../src/game/persistence.js";
 
-function createStorage(seedValue: string | null = null, backupValue: string | null = null) {
+function createStorage(
+  seedValue: string | null = null,
+  backupValue: string | null = null,
+) {
   const values = new Map<string, string | null>([
     [STORAGE_KEY, seedValue],
     [STORAGE_BACKUP_KEY, backupValue],

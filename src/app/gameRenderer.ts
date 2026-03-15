@@ -333,11 +333,15 @@ export function createGameRenderer({
       (state.strategicDebt ? 1 : 0) +
       (debt.progress >= 0.75 ? 1 : 0);
     const opsCount = opsCriticalCount + state.activeEvents.length;
-    const releaseCount =
-      PRESTIGE_UPGRADES.filter((upgrade) => {
+    const affordablePrestigeUpgradeCount = PRESTIGE_UPGRADES.filter(
+      (upgrade) => {
         const cost = getPrestigeUpgradeCost(state, upgrade.id);
         return Number.isFinite(cost) && state.reputation >= cost;
-      }).length + (elements.prestigeReset.disabled ? 0 : 1);
+      },
+    ).length;
+    const releaseCount = elements.prestigeReset.disabled
+      ? affordablePrestigeUpgradeCount
+      : 1;
 
     setBadge(elements.mobileNavPlayBadge, 0);
     setBadge(

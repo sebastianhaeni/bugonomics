@@ -39,8 +39,8 @@ export function initAnalytics(
   documentObject.head.append(script);
 
   windowObject.dataLayer = windowObject.dataLayer || [];
-  windowObject.gtag = function gtag(...args: unknown[]) {
-    windowObject.dataLayer?.push(args);
+  windowObject.gtag = function gtag() {
+    windowObject.dataLayer?.push(arguments);
   };
 
   windowObject.gtag("js", new Date());

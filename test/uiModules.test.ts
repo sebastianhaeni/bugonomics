@@ -7,6 +7,7 @@ import { requiredChild, createPlaceholder } from "../src/app/domHelpers.js";
 import { createGameRenderer } from "../src/app/gameRenderer.js";
 import { createManagementPanelsController } from "../src/app/managementPanelsController.js";
 import { createManualWriteController } from "../src/app/manualWriteController.js";
+import { initAnalytics } from "../src/app/analytics.js";
 import { registerServiceWorker } from "../src/app/registerServiceWorker.js";
 import { mountGameShell } from "../src/app/shell.js";
 import {
@@ -152,6 +153,32 @@ test("manual write controller ignores writes after game over", () => {
   controller.performManualWrite(["Ignored"]);
 
   expect(dispatchAction).not.toHaveBeenCalled();
+});
+
+test("analytics queues standard gtag calls for the measurement id", () => {
+  vi.stubEnv("PROD", true);
+  const analyticsWindow = window as Window & {
+    dataLayer?: IArguments[];
+    gtag?: (...args: unknown[]) => void;
+  };
+  analyticsWindow.dataLayer = [];
+  analyticsWindow.gtag = undefined;
+
+  initAnalytics("G-TEST123", analyticsWindow, document);
+
+  const analyticsScript = document.querySelector(
+    'script[data-ga-measurement-id="G-TEST123"]',
+  ) as HTMLScriptElement | null;
+
+  expect(analyticsScript?.src).toContain(
+    "https://www.googletagmanager.com/gtag/js?id=G-TEST123",
+  );
+  expect(analyticsWindow.dataLayer).toHaveLength(2);
+  expect(Array.from(analyticsWindow.dataLayer?.[0] ?? [])).toContain("js");
+  expect(Array.from(analyticsWindow.dataLayer?.[1] ?? [])).toContain("config");
+  expect(Array.from(analyticsWindow.dataLayer?.[1] ?? [])).toContain(
+    "G-TEST123",
+  );
 });
 
 test("code background controller animates text and resets cleanly", () => {
